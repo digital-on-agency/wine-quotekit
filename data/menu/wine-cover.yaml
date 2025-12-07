@@ -1,0 +1,29 @@
+meta:
+  id: "example-wine-cover"
+  date: "2025-12-07"
+  ref: "example-wine-cover"
+
+cover:
+  title: "CARTA DEI VINI"
+  venue_name: "Ristorante Da Sons"
+  description: >
+    Una selezione curata con passione dal Sons,
+    dai grandi classici ai piccoli produttori artigianali.
+  logo_image: "../assets/img/sons.png"   # opzionale
+  logo_alt: "Logo Ristorante Da Sons"
+
+  qr_image: "../assets/img/sons-qr.png"
+  qr_alt: "QR code per consultare la carta dei vini completa"
+  qr_caption: "Scansiona il QR per visualizzare il menù completo e gli abbinamenti consigliati."
+
+  footer_note: "Lista aggiornata al {{meta.date}}."
+
+# Qui potrai poi aggiungere le sezioni dei vini (che userai nella pagina destra)
+wines:
+  - category: "Vini Rossi"
+    region: "Toscana"
+    items:
+      - name: "Chianti Classico Riserva"
+        producer: "Antinori"
+        price_eur: 45
+        notes: "Gradazione: 13,5%"

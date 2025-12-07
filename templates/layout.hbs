@@ -2,119 +2,25 @@
 <html lang="it">
 
 <head>
-    <meta charset="utf-8" />
-    <title>Quote – {{client.name}} – {{meta.ref}}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="../assets/styles.css" />
-    <style>
-        @page {
-            size: A4;
-            margin: 20mm 16mm;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <title>{{meta.ref}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../assets/styles.css" />
+
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+    }
+  </style>
 </head>
 
-<body>
-    <!-- HEADER: Document header with logo, company info, and document metadata -->
-    <header class="doc-header">
-        <!-- Left side: Document title and main metadata -->
-        <div class="doc-header-left">
-            <h1 class="doc-title">Quote</h1>
-            <div class="doc-meta">
-                {{!-- <div><strong>Ref:</strong> {{meta.ref}}</div> --}}
-                <div><strong>Data:</strong> {{formatDate meta.date}}</div>
-                {{#if meta.valid_until}}
-                {{!-- <div><strong>Valido fino a:</strong> {{formatDate meta.valid_until}}</div> --}}
-                {{/if}}
-            </div>
-        </div>
-
-        <!-- Right side: Company logo, issuer info and top total summary -->
-        <div class="doc-header-right">
-            <div class="issuer">
-                <div class="issuer-name">{{company.name}}</div>
-                <div class="issuer-lines">
-                    {{company.address}}<br />
-                    {{company.email}} 
-                    {{!-- · --}}<br />
-                    {{company.phone}}
-                </div>
-            </div>
-            <div class="total-top">
-                <div class="total-top-label">Total</div>
-                <div class="total-top-value"><strong>{{eur totals.grand}}</strong></div>
-            </div>
-        </div>
-    </header>
-
-    <!-- CUSTOMER INFORMATION PANEL -->
-    <section class="panel">
-        <div class="panel-col">
-            <div class="panel-title">Costumer</div>
-            <div class="panel-text">
-                <strong>{{client.name}}</strong><br />
-                {{client.company}}<br />
-                {{client.email}} · {{client.phone}}
-            </div>
-        </div>
-    </section>
-
-    <!-- OPTIONAL: Introductory notes or scope-->
-    {{#if scope_html}}
-    <section class="section">
-        <h2>Notes</h2>
-        <div class="prose">{{{scope_html}}}</div>
-    </section>
-    {{/if}}
-
-    <!-- LINE ITEMS AND TOTALS SECTION -->
-    <section class="section">
-        <h2>Items</h2>
-
-        <!-- List of line items (rows for each item in the quote) -->
-        <div class="items">
-            {{#each items}}
-            {{> lineItem}}
-            {{/each}}
-        </div>
-
-        <!-- Totals summary (subtotal, discounts, VAT, and grand total) -->
-        <div class="totals">
-            {{#if totals.subtotal}}
-            <div class="totals-row">
-                <div class="totals-label">Subtotal</div>
-                <div class="totals-value">{{eur totals.subtotal}}</div>
-            </div>
-            {{/if}}
-            {{#if totals.discount}}
-            <div class="totals-row">
-                <div class="totals-label">Sconto</div>
-                <div class="totals-value">-{{eur totals.discount}}</div>
-            </div>
-            {{/if}}
-            {{#if totals.vat}}
-            <div class="totals-row">
-                <div class="totals-label">IVA ({{totals.vat_rate}}%)</div>
-                <div class="totals-value">{{eur totals.vat}}</div>
-            </div>
-            {{/if}}
-            <div class="totals-row totals-grand">
-                <div class="totals-label"><strong>TOTAL</strong></div>
-                <div class="totals-value"><strong>{{eur totals.grand}}</strong></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- OPTIONAL CONDITIONS SECTION -->
-    {{#if terms_html}}
-    <section class="section">
-        <h2>Conditions</h2>
-        <div class="prose">{{{terms_html}}}</div>
-    </section>
-    {{/if}}
-
-    <!-- FOOTER PARTIAL: Document footer and extra notes -->
-    {{> footer}}
+<body class="menu-doc">
+  {{> cover}}
 </body>
 
 </html>

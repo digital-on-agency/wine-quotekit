@@ -1,0 +1,55 @@
+meta:
+  date: 2025-01-15
+
+company:
+  name: Your Name
+  vat: Your Vat Number
+  email: youremail@example.com.com
+  phone: "+39 333 111 2222"
+  address: your business address
+  site: your-business-website-url.com
+  logo: ../assets/logo.png   # optional (put the file in assets/)
+
+client:
+  # If the client is a person belonging to a company, write the person's name under "name" and the company name under "company".
+  # If the client is just a person (not associated with a company), leave the "company" field blank.
+  # If the client is a company (not a specific person), write the company name under "name" and leave "company" blank.
+  name: Client Name
+  company: Company Name
+  email: example@example.com
+  phone: "+39 333 111 2222"
+
+# You can use inline markdown...
+scope_md: |
+  **Objective:** Write the goal of the work in one sentence. If desired, you can list the main features (typically 3 to 5 maximum).
+  - Feateure 1
+  - Feateure 2
+  - Feateure 3
+
+# # ...or point to a markown file:
+# scope_md_path: "../markdown/test-descrizione.md"
+
+items:
+  - title: Feature 1
+    qty: 1
+    unit_price: 300
+    note: little description
+  - title: Feature 2
+    qty: 1
+    unit_price: 300
+    note: little description
+  - title: Feature 3
+    qty: 1
+    unit_price: 300
+    note: little description
+
+pricing:
+  discount: 0
+  vat_rate: 0
+
+terms_md: |
+  **Payment:** 50% at start, 50% upon delivery.
+  **Validity:** 15 days from the date of the quote.
+  **Extra:** Out-of-scope activities will be quoted separately.
+
+# terms_md_path: "../data/markdown/termini-standard.md"

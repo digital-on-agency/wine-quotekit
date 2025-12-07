@@ -197,3 +197,83 @@ h2 {
     justify-content: space-between;
     font-size: 12px;
 }
+
+/* Pagina copertina generale */
+body.menu-doc {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .page {
+    width: 100%;
+    min-height: 100vh;           /* per l'HTML di preview */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .page--cover {
+    background: #fdfdfd;
+  }
+  
+  .cover-inner {
+    width: 70%;
+    max-width: 550px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  
+  /* Header: logo + titoli */
+  .cover-header {
+    margin-bottom: 32px;
+  }
+  
+  .cover-logo-image {
+    display: block;
+    margin: 0 auto 24px;
+    width: 80px;
+    height: auto;
+  }
+  
+  .cover-title {
+    font-size: 30px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+  
+  .cover-venue {
+    font-size: 16px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  
+  .cover-description {
+    margin: 24px auto 40px;
+    max-width: 420px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #555;
+  }
+  
+  /* QR code */
+  .cover-qr {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .cover-qr-image {
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+  }
+  
+  .cover-qr-caption {
+    font-size: 11px;
+    color: #555;
+  }
+  
