@@ -1,0 +1,36 @@
+{{!-- templates/partials/category_cover.hbs --}}
+{{!-- Context atteso:
+  {
+    "name": "Vini Rossi",
+    "subtitle": "La nostra selezione di rossi italiani e internazionali",
+    "note": "Disponibilità soggetta a variazioni.",
+    "icon_path": "../assets/img/icon-red-wine.png",
+    "icon_alt": "Icona vini rossi"
+  }
+--}}
+
+<section class="page page--category_cover">
+  <div class="category_cover-inner">
+
+    <h1 class="category_cover-title">
+      {{name}}
+    </h1>
+
+    {{#if icon_path}}
+      <img src="{{icon_path}}" alt="{{icon_alt}}" class="category_cover-icon" />
+    {{/if}}
+
+    {{#if subtitle}}
+      <p class="category_cover-subtitle">
+        {{subtitle}}
+      </p>
+    {{/if}}
+
+    {{#if note}}
+      <p class="category_cover-note">
+        {{note}}
+      </p>
+    {{/if}}
+
+  </div>
+</section>

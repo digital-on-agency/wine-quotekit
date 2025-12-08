@@ -1,0 +1,37 @@
+.page--category_cover {
+    page-break-after: always;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .category_cover-inner {
+    max-width: 120mm;
+    text-align: center;
+    margin: 0 auto;
+  }
+  
+  .category_cover-title {
+    font-size: 22pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6mm;
+  }
+  
+  .category_cover-icon {
+    display: block;
+    margin: 0 auto 6mm auto;
+    max-width: 20mm;
+    height: auto;
+  }
+  
+  .category_cover-subtitle {
+    font-size: 12pt;
+    margin-bottom: 4mm;
+  }
+  
+  .category_cover-note {
+    font-size: 9pt;
+    opacity: 0.7;
+  }
+  

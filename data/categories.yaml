@@ -1,0 +1,35 @@
+# Definizioni immutabili delle categorie di vino
+# Ogni categoria ha un id che corrisponde al nome usato nel file wine-cover.yaml
+# e un path all'icona corrispondente
+
+categories:
+  - id: "Rosso"
+    name: "Vini Rossi"
+    subtitle: "La nostra selezione di rossi italiani e internazionali"
+    note: "Disponibilità dei vini soggetta a variazioni."
+    icon_path: "../assets/img/icon-red-wine.png"
+    icon_alt: "Icona vini rossi"
+
+  - id: "Bianco"
+    name: "Vini Bianchi"
+    subtitle: "Bianchi freschi e minerali"
+    icon_path: "../assets/img/icon-white-wine.png"
+    icon_alt: "Icona vini bianchi"
+
+  - id: "Pink"
+    name: "Vini Rosa"
+    subtitle: ""
+    icon_path: "../assets/img/icon-pink-wine.png"
+    icon_alt: "Icona vini rosa"
+
+  - id: "Dessert"
+    name: "Vini Dolci"
+    subtitle: ""
+    icon_path: "../assets/img/icon-dessert-wine.png"
+    icon_alt: "Icona vini dolci"
+
+  - id: "Sparkling"
+    name: "Vini Spumanti"
+    subtitle: ""
+    icon_path: "../assets/img/icon-sparkling-wine.png"
+    icon_alt: "Icona vini spumanti"

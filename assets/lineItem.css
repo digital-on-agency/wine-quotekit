@@ -1,0 +1,40 @@
+/* ============================================
+   LINE ITEM STYLES - Per templates/partials/lineItem.hbs
+   ============================================ */
+
+.item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.item:last-child {
+    border-bottom: 0;
+}
+
+.item-left {
+    /* Contenitore per la parte sinistra dell'item */
+}
+
+.item-right {
+    /* Contenitore per la parte destra dell'item */
+}
+
+.item-title {
+    font-weight: 600;
+}
+
+.item-note {
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.item-meta {
+    margin-top: 2px;
+}
+
+.item-price {
+    font-size: 14px;
+}

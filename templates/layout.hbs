@@ -5,12 +5,28 @@
   <meta charset="utf-8" />
   <title>{{meta.ref}}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="../assets/styles.css" />
+  <!-- Shared styles (variabili, reset, utility) -->
+  <link rel="stylesheet" href="../assets/shared.css" />
+  <!-- Layout styles -->
+  <link rel="stylesheet" href="../assets/layout.css" />
+  <!-- Component styles -->
+  <link rel="stylesheet" href="../assets/main_cover.css" />
+  <link rel="stylesheet" href="../assets/category_cover.css" />
+  <link rel="stylesheet" href="../assets/footer.css" />
+  <link rel="stylesheet" href="../assets/lineItem.css" />
+  <link rel="stylesheet" href="../assets/listing.css" />
 
   <style>
     @page {
       size: A4;
       margin: 0;
+    }
+    /* Margini imprescindibili per tutte le pagine */
+    @page {
+      margin-top: 20mm;
+      margin-bottom: 18mm;
+      margin-left: 12mm;
+      margin-right: 12mm;
     }
     body {
       margin: 0;
@@ -20,7 +36,19 @@
 </head>
 
 <body class="menu-doc">
-  {{> cover}}
+  {{!-- Pagina 1: main cover --}}
+{{> main_cover main_cover}}
+
+
+{{!-- Per ogni categoria --}}
+{{#each categories}}
+  {{!-- Pagina: cover categoria --}}
+  {{> category_cover this}}
+
+  {{!-- Listing vini di questa categoria --}}
+  {{> listing this}}
+{{/each}}
+
 </body>
 
 </html>

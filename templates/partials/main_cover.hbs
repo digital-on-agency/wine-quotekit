@@ -1,0 +1,42 @@
+<div class="page page--main_cover">
+  <div class="main_cover-inner">
+
+    <header class="main_cover-header">
+      {{#if logo_image}}
+        <img
+          src="{{logo_image}}"
+          alt="{{logo_alt}}"
+          class="main_cover-logo-image"
+        />
+      {{/if}}
+
+      <h1 class="main_cover-title">{{title}}</h1>
+
+      {{#if venue_name}}
+        <h2 class="main_cover-venue">{{venue_name}}</h2>
+      {{/if}}
+    </header>
+
+    {{#if description}}
+      <p class="cover-description">
+        {{description}}
+      </p>
+    {{/if}}
+
+    {{#if qr_image}}
+      <div class="cover-qr">
+        <img
+          src="{{qr_image}}"
+          alt="{{qr_alt}}"
+          class="main_cover-qr-image"
+        />
+        {{#if qr_caption}}
+          <p class="main_cover-qr-caption">
+            {{qr_caption}}
+          </p>
+        {{/if}}
+      </div>
+    {{/if}}
+
+  </div>
+</div>

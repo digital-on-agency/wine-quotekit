@@ -1,0 +1,17 @@
+/* ============================================
+   LAYOUT STYLES - Per templates/layout.hbs
+   ============================================ */
+
+body.menu-doc {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.page {
+    width: 100%;
+    min-height: 100vh;           /* per l'HTML di preview */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

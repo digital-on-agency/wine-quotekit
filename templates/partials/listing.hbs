@@ -1,0 +1,120 @@
+{{!-- templates/partials/listing.hbs --}}
+{{!--
+  Expected context (per categoria):
+
+  {
+    "name": "Rosso" | "Bianco" | "Dessert",     (opzionale se già usi category-cover)
+    "winesByRegion": [
+      {
+        "region": "Toscana",
+        "winesByAppellation": [
+          {
+            "appellation": "Chianti Classico DOCG",
+            "wines": [
+              {
+                "name": "Chianti Classico Riserva",
+                "producer": "Antinori",
+                "appellation": "Chianti Classico DOCG",
+                "region": "Toscana",                    (opzionale)
+                "abv": "Gradazione: 13,5%",          (opzionale)
+                "price_glass_eur": 8,                  (opzionale)
+                "price_bottle_eur": 45,                (opzionale)
+                "price_eur": 45                        (fallback bottiglia)
+              },
+              ...
+            ]
+          },
+          ...
+        ]
+      },
+      ...
+    ],
+    "wines": [...]  (array piatto per retrocompatibilità)
+  }
+--}}
+
+<section class="page page--listing">
+  <div class="listing-inner">
+
+    {{!-- Se vuoi, puoi mostrare di nuovo il nome categoria qui (di solito no, perché c’è la category-cover) --}}
+    {{!--
+    {{#if name}}
+      <h2 class="listing-category-title">{{name}}</h2>
+    {{/if}}
+    --}}
+
+    {{#each winesByRegion}}
+      {{!-- Titolo regione --}}
+      {{#if region}}
+        <h2 class="listing-region-title">{{region}}</h2>
+      {{/if}}
+
+      {{!-- Per ogni appellation nella regione --}}
+      {{#each winesByAppellation}}
+        {{!-- Titolo appellation --}}
+        {{#if appellation}}
+          <h3 class="listing-appellation-title">{{appellation}}</h3>
+        {{/if}}
+
+        {{!-- Elenco vini di questa appellation --}}
+        {{#each wines}}
+      <div class="wine-row">
+        <div class="wine-info">
+          <div class="wine-name">
+            <strong>{{name}}</strong>
+          </div>
+
+          <div class="wine-meta">
+            {{!-- Produttore --}}
+            {{#if producer}}
+              <span class="wine-producer">{{producer}}</span>
+            {{/if}}
+
+            {{!-- Vitigni, se presenti --}}
+            {{#if grapes}}
+              {{#if producer}} — {{/if}}
+              <span class="wine-grapes">{{grapes}}</span>
+            {{/if}}
+
+            {{!-- Gradazione / note, se presenti --}}
+            {{#if abv}}
+              {{#if producer}}{{#unless grapes}} — {{/unless}}{{/if}}{{#if grapes}} — {{/if}}
+              <span class="wine-abv">{{abv}}</span>
+            {{/if}}
+
+            {{!-- Regione opzionale, se vuoi mostrarla
+            {{#if region}}
+              <span class="wine-region"> · {{region}}</span>
+            {{/if}}
+            --}}
+          </div>
+        </div>
+
+        <div class="wine-prices">
+          {{!-- Se hai sia calice che bottiglia --}}
+          {{#if price_glass_eur}}
+            <div class="wine-price-glass">
+              {{price_glass_eur}}€
+            </div>
+          {{/if}}
+
+          {{#if price_bottle_eur}}
+            <div class="wine-price-bottle">
+              {{price_bottle_eur}}€
+            </div>
+          {{else}}
+            {{!-- Fallback: se non c’è price_bottle_eur ma c’è price_eur, usalo come bottiglia --}}
+            {{#if price_eur}}
+              <div class="wine-price-bottle">
+                {{price_eur}}€
+              </div>
+            {{/if}}
+          {{/if}}
+        </div>
+      </div>
+        {{/each}}
+      {{/each}}
+    {{/each}}
+
+  </div>
+</section>

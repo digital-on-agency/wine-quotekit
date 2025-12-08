@@ -3,14 +3,14 @@ meta:
   date: "2025-12-07"
   ref: "example-wine-cover"
 
-cover:
+main_cover:
   title: "CARTA DEI VINI"
   venue_name: "Ristorante Da Sons"
   description: >
     Una selezione curata con passione dal Sons,
     dai grandi classici ai piccoli produttori artigianali.
-  logo_image: "../assets/img/sons.png"   # opzionale
-  logo_alt: "Logo Ristorante Da Sons"
+  logo_image: "../assets/img/logo-placeholder.png"   # opzionale
+  logo_alt: "Logo placeholder"
 
   qr_image: "../assets/img/sons-qr.png"
   qr_alt: "QR code per consultare la carta dei vini completa"
@@ -18,12 +18,143 @@ cover:
 
   footer_note: "Lista aggiornata al {{meta.date}}."
 
+categories:
+  - id: "Rosso"
+    name: "Vini Rossi"
+    subtitle: "La nostra selezione di rossi italiani e internazionali"
+    note: "Disponibilità dei vini soggetta a variazioni."
+  - id: "bianchi"
+    name: "Vini Bianchi"
+    subtitle: "Bianchi freschi e minerali"
+
+
 # Qui potrai poi aggiungere le sezioni dei vini (che userai nella pagina destra)
 wines:
-  - category: "Vini Rossi"
-    region: "Toscana"
+  - category: Rosso
+    region: Toscana
     items:
-      - name: "Chianti Classico Riserva"
-        producer: "Antinori"
-        price_eur: 45
-        notes: "Gradazione: 13,5%"
+      - name: "Bruciato DOCG 2023"
+        producer: "Guado al Tasso"
+        appellation: "DOCG"
+        grapes: "30% Cabernet Sauvignon, 30% Merlot, 30% Syrah, 10% Altri Vitigni"
+        price_eur: 42.00
+        abv: "14,0%"
+      - name: "Cifra IGT 2022"
+        producer: "Duemani"
+        appellation: "IGT"
+        grapes: "100% Cabernet Franc"
+        price_eur: 39.00
+        abv: "135,0%"
+      - name: "50&50 IGT 2020"
+        producer: "Avignonesi"
+        appellation: "IGT"
+        grapes: "50% Sangiovese, 50% Merlot"
+        price_eur: 135.00
+        abv: "135,0%"
+      - name: "Uno IGT"
+        producer: "Tenuta di Carleone"
+        appellation: "IGT"
+        grapes: "100% Sangiovese"
+        price_eur: 48.00
+        abv: "13,5%"
+      - name: "IGT Polissena 2020"
+        producer: "Il Borghetto"
+        appellation: "IGT"
+        price_eur: 54.00
+        abv: "13,5%"
+      - name: "IGT Montevertine 2020"
+        producer: "Montevertine"
+        appellation: "Montescudaio IGT"
+        grapes: "90% Sangiovese, 5% Canaiolo, 5% Colorino"
+        price_eur: 79.00
+        abv: "13,0%"
+      - name: "IGT Le Pergole Torte 2019"
+        producer: "Montevertine"
+        appellation: "Montescudaio IGT"
+        grapes: "100% Sangiovese"
+        price_eur: 220.00
+        abv: "13,5%"
+      - name: "IGT Le Trame 2020"
+        producer: "Il Borghetto"
+        appellation: "IGT"
+        price_eur: 62.00
+        abv: "13,5%"
+      - name: "Chianti Classico DOCG 2021"
+        producer: "Fontodi"
+        appellation: "Chianti Classico DOCG"
+        price_eur: 39.00
+        abv: "14,0%"
+      - name: "IGT Flaccianello 2020"
+        producer: "Fontodi"
+        appellation: "IGT"
+        price_eur: 145.00
+        abv: "15,0%"
+      - name: "IGT Percarlo 2020"
+        producer: "San Giusto a Rentennano"
+        appellation: "IGT"
+        price_eur: 125.00
+        abv: "14,5%"
+      - name: "Barolo DOCG 2019"
+        producer: "Bartolo Mascarello"
+        appellation: "Barolo DOCG"
+        price_eur: 420.00
+        abv: "14,0%"
+      - name: "Barbaresco DOCG 2021"
+        producer: "Gaja"
+        appellation: "Barbaresco DOCG"
+        price_eur: 320.00
+        abv: "14,0%"
+      - name: "Barolo DOCG Monvigliero 2019"
+        producer: "Burlotto"
+        appellation: "Barolo DOCG"
+        price_eur: 650.00
+        abv: "14,0%"
+      - name: "IGT Syrah 2021"
+        producer: "Duemani"
+        appellation: "Costa Toscana IGT"
+        grapes: "100% Syrah"
+        price_eur: 62.00
+        abv: "14,5%"
+      - name: "IGT Suisassi 2020"
+        producer: "Duemani"
+        appellation: "Costa Toscana IGT"
+        grapes: "100% Cabernet Franc"
+        price_eur: 115.00
+        abv: "15,0%"
+
+  - category: Bianco
+    region: Toscana
+    items:
+      - name: "Vermentino Grattamacco DOC 2023"
+        producer: "Grattamacco"
+        appellation: "Bolgheri DOC"
+        grapes: "100% Vermentino Bianco"
+        price_eur: 60.00
+        abv: "14,0%"
+      - name: "Filemone IGT 2023"
+        producer: "La Fralluca"
+        appellation: "Costa Toscana IGT"
+        grapes: "100% Vermentino Bianco"
+        price_eur: 36.00
+        abv: "14,0%"
+      - name: "Bauci Viognier IGT 2022"
+        producer: "La Fralluca"
+        appellation: "Costa Toscana IGT"
+        grapes: "100% Viognier"
+        price_eur: 38.00
+        abv: "14,0%"
+      - name: "Soave Classico DOC 2023"
+        producer: "Pieropan"
+        appellation: "Soave DOC"
+        grapes: "85% Garganega, 15% Trebbiano di Soave"
+        price_eur: 30.00
+        abv: "12,0%"
+
+  - category: Dessert
+    region: Toscana
+    items:
+      - name: "Occhio di Pernice Vin Santo DOC 2008"
+        producer: "Badia a Coltibuono"
+        appellation: "Chianti Classico DOC"
+        price_eur: 88.00
+        abv: "15,5%"

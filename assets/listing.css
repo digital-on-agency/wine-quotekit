@@ -1,0 +1,199 @@
+/* === LISTING – PAGINE ELENCO VINI ======================== */
+
+/* Ogni listing è una pagina; se la categoria ha tanti vini il contenuto si spezza su più pagine */
+.page--listing {
+    /* Se vuoi che ogni categoria inizi su pagina nuova, tieni questa regola */
+    page-break-after: always;
+    align-items: flex-start; /* Allinea in alto invece di centrare */
+    /* I margini sono gestiti da @page nel layout.hbs - IMPRESCINDIBILI */
+    /* Rimuoviamo il padding perché i margini sono gestiti da @page */
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Contenuto interno della pagina listing */
+  .listing-inner {
+    font-size: 11pt;
+    line-height: 1.4;
+    width: 100%;
+    /* I margini sono gestiti da @page nel layout.hbs */
+  }
+  
+  /* Titolo categoria opzionale (se lo usi nel listing.hbs) */
+  .listing-category-title {
+    font-size: 14pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 8mm 0;
+  }
+  
+  /* Titolo regione */
+  .listing-region-title {
+    font-size: 13pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 6mm 0 4mm 0;
+    font-weight: 600;
+    opacity: 0.85;
+    page-break-before: avoid;  /* Evita page-break prima del titolo */
+    page-break-after: avoid;   /* Evita page-break dopo il titolo regione */
+    orphans: 3;                /* Evita che il titolo rimanga solo */
+    widows: 3;
+    padding-top: 20mm;         /* Padding quando inizia una nuova pagina - IMPRESCINDIBILE */
+  }
+  
+  /* Rimuovi padding-top dal primo titolo regione della prima pagina */
+  .listing-inner > *:first-child > .listing-region-title:first-child,
+  .listing-inner > .listing-region-title:first-child {
+    padding-top: 0 !important;
+  }
+  
+  /* Titolo appellation */
+  .listing-appellation-title {
+    font-size: 11pt;
+    text-transform: none;
+    letter-spacing: 0.03em;
+    margin: 4mm 0 0 0;
+    padding-bottom: 5mm;
+    padding-top: 5mm;
+    font-weight: 500;
+    opacity: 0.75;
+    font-style: italic;
+    page-break-before: auto;   /* Permette page-break prima se necessario */
+    page-break-after: avoid;   /* Evita page-break dopo il titolo se non c'è almeno un wine-row */
+    orphans: 2;
+    widows: 2;
+  }
+  
+  /* Riduci ulteriormente lo spazio dopo il titolo appellation */
+  .listing-appellation-title + * {
+    margin-top: 0;
+  }
+  
+  /* Il primo wine-row dopo un titolo appellation deve rimanere insieme al titolo */
+  .listing-appellation-title + .wine-row,
+  .listing-appellation-title ~ .wine-row:first-of-type {
+    page-break-before: avoid;  /* Evita page-break prima del primo wine-row */
+    orphans: 3;
+    widows: 3;
+  }
+  
+  /* Gestione avanzata: min-height protettivo per evitare che un titolo appellation rimanga da solo
+     Questo forza page-break prima se non c'è spazio per titolo + almeno un wine-row + margine inferiore */
+  .listing-appellation-title {
+    min-height: 22mm;  /* Forza page-break prima se non c'è spazio sufficiente */
+  }
+  
+  /* Il primo titolo appellation dopo una regione NON deve avere min-height protettivo
+     per evitare page-break indesiderato dopo il titolo regione */
+  .listing-region-title + .listing-appellation-title {
+    min-height: 0 !important;      /* Rimuove il min-height protettivo */
+    padding-top: 0 !important;       /* Rimuove anche il padding-top extra */
+    margin-top: 0 !important;       /* Rimuove il margin-top per evitare spazio extra */
+    page-break-before: avoid !important;  /* Mantiene insieme titolo regione e primo appellation */
+  }
+  
+  /* Questo viene gestito automaticamente da page-break-after: avoid sul titolo e page-break-before: avoid sul primo wine-row */
+  
+  /* Singola riga vino: info a sinistra, prezzi a destra */
+  .wine-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8mm;
+    margin-bottom: 4mm;
+    page-break-inside: avoid; /* evita che il vino si spezzi tra due pagine */
+    page-break-after: avoid;  /* evita page-break dopo il vino */
+    page-break-before: auto;
+    padding-top: 20mm;         /* Padding quando inizia una nuova pagina - IMPRESCINDIBILE */
+    orphans: 3;                /* evita che rimangano poche righe da sole */
+    widows: 3;
+    /* Assicura che rispetti sempre il margine inferiore */
+    margin-bottom: 4mm;
+  }
+  
+  /* I margini sono gestiti da @page, non serve margin-bottom sull'ultimo elemento */
+  
+  /* Rimuovi padding-top dai wine-row quando sono preceduti da un altro wine-row */
+  .wine-row + .wine-row {
+    padding-top: 0;
+  }
+  
+  /* Rimuovi padding-top dal primo wine-row quando è preceduto da un titolo appellation */
+  .listing-appellation-title ~ .wine-row:first-of-type,
+  .listing-appellation-title + .wine-row {
+    padding-top: 0 !important;
+    margin-top: 0;
+  }
+  
+  /* Rimuovi padding-top dal primo wine-row quando è preceduto da un titolo regione */
+  .listing-region-title ~ .wine-row:first-of-type,
+  .listing-region-title + .wine-row {
+    padding-top: 0 !important;
+    margin-top: 0;
+  }
+  
+  /* Rimuovi padding-top dal primo wine-row se è il primo elemento della pagina */
+  .listing-inner > *:first-child .wine-row:first-child,
+  .listing-inner > .wine-row:first-child {
+    padding-top: 0 !important;
+  }
+  
+  /* Assicura che i wine-row non si spezzino tra pagine */
+  .wine-row > * {
+    page-break-inside: avoid;
+  }
+  
+  /* Colonna di sinistra */
+  .wine-info {
+    flex: 1;
+  }
+  
+  /* Nome vino */
+  .wine-name {
+    margin: 0 0 1mm 0;
+    font-size: 11pt;
+  }
+  
+  /* Produttore + note (es. gradazione) */
+  .wine-meta {
+    font-size: 9pt;
+    opacity: 0.8;
+  }
+  
+  /* (opzionale, se vuoi customizzare singolarmente) */
+  .wine-producer {
+    font-weight: 400;
+  }
+  
+  .wine-grapes {
+    font-style: normal;
+  }
+  
+  .wine-abv {
+    font-style: italic;
+  }
+  
+  /* Colonna prezzi a destra */
+  .wine-prices {
+    min-width: 30mm;
+    text-align: right;
+    font-size: 10pt;
+  }
+  
+  /* Se vuoi distinguere visivamente calice vs bottiglia */
+  .wine-price-glass {
+    margin-bottom: 1mm;
+  }
+  
+  .wine-price-bottle {
+    font-weight: 500;
+  }
+  
+  /* Piccola linea di separazione opzionale tra i vini */
+  /*
+  .wine-row + .wine-row {
+    border-top: 0.25pt solid rgba(0,0,0,0.08);
+    padding-top: 3mm;
+  }
+  */
+  

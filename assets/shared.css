@@ -1,0 +1,51 @@
+/* ============================================
+   SHARED STYLES - Componenti trasversali
+   ============================================ */
+
+/* Variabili CSS */
+:root {
+    --ink: #222;
+    --muted: #666;
+    --line: #e6e6e6;
+}
+
+/* Reset base */
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    color: var(--ink);
+    font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+/* Tipografia base */
+h1,
+h2 {
+    margin: 0 0 .4rem 0;
+    font-weight: 700;
+}
+
+h1 {
+    font-size: 26px;
+    letter-spacing: .2px;
+}
+
+h2 {
+    font-size: 16px;
+}
+
+/* Utility classes */
+.small {
+    font-size: 12px;
+}
+
+.muted {
+    color: var(--muted);
+}
