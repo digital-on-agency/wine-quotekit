@@ -1,7 +1,15 @@
 // src/api/airtable/airtableApi.js
 // ESM - Node >= 18 (fetch nativo)
 
-const AIRTABLE_API_BASE = "https://api.airtable.com/v0";
+import dotenv from "dotenv";
+import { logger } from "../../../lib/logger/index.js";
+
+dotenv.config();
+
+const AIRTABLE_API_BASE = process.env.AIRTABLE_API_BASE;
+if (!AIRTABLE_API_BASE) {
+  throw new Error("AIRTABLE_API_BASE is not defined");
+}
 
 /**
  * Builds a fully qualified Airtable API URL by combining a base path with

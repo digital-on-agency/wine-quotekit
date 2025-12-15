@@ -1,4 +1,4 @@
-import { logger } from "../logger.js";
+import { logger } from "../logger/index.js";
 
 // src/data/fetchData.js
 export async function fetchData({ table }) {
