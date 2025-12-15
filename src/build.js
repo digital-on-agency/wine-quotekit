@@ -100,7 +100,7 @@ function buildWineListContext(rawData, absData) {
         note: categoryDef.note || null,
         icon_path: categoryDef.icon_path || null,
         icon_alt: categoryDef.icon_alt || `${categoryName} icon`,
-        winesByRegion: [],  // Array di oggetti { region, wines: [...] }
+        winesByRegion: [],  // Array di oggetti { region, winesByZone: [...] }
       };
       categoriesMap.set(categoryName, category);
     }
@@ -111,30 +111,43 @@ function buildWineListContext(rawData, absData) {
     if (!regionGroup) {
       regionGroup = {
         region: region || "Altre regioni",
-        winesByAppellation: []  // Array di oggetti { appellation, wines: [...] }
+        winesByZone: []  // Array di oggetti { zone, wines: [...] }
       };
       category.winesByRegion.push(regionGroup);
     }
 
-    // Raggruppa i vini per appellation all'interno della regione
+    // Raggruppa i vini per zone all'interno della regione
     items.forEach((item) => {
-      const appellation = item.appellation || "Senza denominazione";
+      const zone = item.zone || "Senza zona";
       
-      // Cerca se esiste già una sezione per questa appellation
-      let appellationGroup = regionGroup.winesByAppellation.find(ag => ag.appellation === appellation);
-      if (!appellationGroup) {
-        appellationGroup = {
-          appellation: appellation,
+      // Cerca se esiste già una sezione per questa zone
+      let zoneGroup = regionGroup.winesByZone.find(zg => zg.zone === zone);
+      if (!zoneGroup) {
+        zoneGroup = {
+          zone: zone,
           wines: []
         };
-        regionGroup.winesByAppellation.push(appellationGroup);
+        regionGroup.winesByZone.push(zoneGroup);
       }
 
-      // Aggiunge il vino al gruppo dell'appellation
-      appellationGroup.wines.push({
+      // Aggiunge il vino al gruppo della zone
+      zoneGroup.wines.push({
         ...item,
         region,        // così nel listing puoi anche mostrare la regione
         category: categoryName,
+      });
+    });
+  });
+
+  // Ordina i vini per produttore all'interno di ogni zona
+  categoriesMap.forEach((category) => {
+    category.winesByRegion.forEach((regionGroup) => {
+      regionGroup.winesByZone.forEach((zoneGroup) => {
+        zoneGroup.wines.sort((a, b) => {
+          const producerA = (a.producer || "").toLowerCase();
+          const producerB = (b.producer || "").toLowerCase();
+          return producerA.localeCompare(producerB);
+        });
       });
     });
   });
@@ -143,13 +156,13 @@ function buildWineListContext(rawData, absData) {
   // E crea anche un array "wines" piatto per retrocompatibilità (se necessario)
   const categories = Array.from(categoriesMap.values())
     .map(cat => {
-      // Calcola il totale dei vini da tutte le regioni e appellations
+      // Calcola il totale dei vini da tutte le regioni e zone
       const totalWines = cat.winesByRegion.reduce((sum, rg) => {
-        return sum + rg.winesByAppellation.reduce((sumApp, ag) => sumApp + ag.wines.length, 0);
+        return sum + rg.winesByZone.reduce((sumZone, zg) => sumZone + zg.wines.length, 0);
       }, 0);
       // Aggiungi anche un array "wines" piatto per retrocompatibilità
       cat.wines = cat.winesByRegion.flatMap(rg => 
-        rg.winesByAppellation.flatMap(ag => ag.wines)
+        rg.winesByZone.flatMap(zg => zg.wines)
       );
       return cat;
     })
