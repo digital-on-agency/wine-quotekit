@@ -1,4 +1,5 @@
 import { logger } from "./logger/index.js";
+import { getRecord } from "../lib/api/airtable/airtableApi.js";
 
 export function wineDataCleaner(data) {
   // TODO: remove debug logs
@@ -15,7 +16,10 @@ export function wineDataCleaner(data) {
     data_record_fields_keys_number: Object.keys(data.records[0].fields).length,
     data_record_fields_keys: Object.keys(data.records[0].fields),
     data_record_fields_example: data.records[1].fields,
+    data_record_enoteca_example: data.records[1].fields["Enoteca"][0],
   });
+
+  // TODO (delete): try to get Enoteca name by identifier
 }
 
 export default function saveYamlWineList(data) {
@@ -24,7 +28,6 @@ export default function saveYamlWineList(data) {
   // sort by type - region - zone - producer
   // yaml builder
 }
-
 
 // *  "Vino + Annata",
 // !  "Prezzo Vendita Bottiglia (in Carta)",
@@ -58,7 +61,6 @@ export default function saveYamlWineList(data) {
 // *  "Luogo di Produzione",
 // *  "Tipologia",
 // TODO: devo ordinare per questo? chiedere a sone
-// ?  "Priorità Zona",
+// *  "Priorità Zona",
 // !  "Immagine Vino",
 // *  "Prezzo In Carta Testo",
-

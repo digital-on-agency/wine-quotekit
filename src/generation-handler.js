@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { logger } from "./lib/logger/index.js";
-import { fetchDefaultTableRecords } from "./lib/api/airtable/airtableIndex.js";
+import { fetchDefaultTableRecords, findEnotecaRecordId } from "./lib/api/airtable/airtableIndex.js";
 import saveYamlWineList from "./lib/wineList.js";
 
 dotenv.config();
@@ -9,7 +9,7 @@ export default async function startGeneration({
     enoteca = "Porgi l'Altra Pancia",
     access_token = process.env.AIRTABLE_API_KEY,
     base_id = process.env.AIRTABLE_BASE_ID,
-    table_id = process.env.AIRTABLE_TAB_ID,
+    table_id = process.env.AIRTABLE_INV_TAB_ID,
     out_tab_id,
     out_record_id
 }) {
@@ -42,7 +42,7 @@ export default async function startGeneration({
             location: "startGeneration",
             table_id: table_id,
         });
-        table_id = process.env.AIRTABLE_TAB_ID;
+        table_id = process.env.AIRTABLE_INV_TAB_ID;
     }
     if (!out_tab_id) {
         logger.error("Missing out tab id, it is required", {
@@ -61,11 +61,63 @@ export default async function startGeneration({
         // throw new Error("PARAM_ERROR: out record id is required");
     }
 
-    // # 1. fetch data from Airtable
+    // # 1. Trova il record ID dell'enoteca
+    let enotecaRecordId = null;
+    if (enoteca) {
+        try {
+            enotecaRecordId = await findEnotecaRecordId(enoteca, {
+                authToken: access_token,
+                baseId: base_id,
+            });
+            
+            if (!enotecaRecordId) {
+                // TODO: throw error, isn't a warning but an important error
+                logger.warning("Enoteca not found, filtering by name will be skipped", {
+                    location: "src/generation-handler.js:startGeneration",
+                    enoteca: enoteca,
+                });
+            }
+        } catch (error) {
+            logger.error("Error finding enoteca record ID", {
+                location: "src/generation-handler.js:startGeneration",
+                enoteca: enoteca,
+                error: error,
+            });
+            // Non blocchiamo il flusso, continuiamo senza filtro enoteca
+        }
+    }
+
+    logger.info("Obtain enoteca record id", {
+        enoteca_record_id: enotecaRecordId,
+        location: "src/generation-handler.js:startGeneration"
+    })
+
+    // # 2. Costruisci il filterByFormula con le condizioni
+    let filterFormula = "{Carta dei Vini} = TRUE()";
+    
+    if (enotecaRecordId) {
+        // Aggiungi il filtro per Enoteca usando il record ID
+        // Per i campi link in Airtable (che sono array di record ID),
+        // possiamo usare FIND con ARRAYJOIN o controllare direttamente
+        // Prova prima con la sintassi diretta (supportata da Airtable per campi link)
+        // Se non funziona, usa: FIND("${enotecaRecordId}", ARRAYJOIN({Enoteca}, ",")) > 0
+        filterFormula = `AND({Carta dei Vini} = TRUE(), FIND("${enotecaRecordId}", ARRAYJOIN({Enoteca}, ",")) > 0)`;
+    }
+
+    logger.info("Fetching data from Airtable with filter", {
+        location: "startGeneration",
+        filterFormula: filterFormula,
+        enoteca: enoteca,
+        enotecaRecordId: enotecaRecordId,
+    });
+
+    // # 3. fetch data from Airtable con i filtri
     let data;
     try{
         // try to fetch data from Airtable
-        data = await fetchDefaultTableRecords({}, {
+        data = await fetchDefaultTableRecords({
+            filterByFormula: filterFormula,
+        }, {
             authToken: access_token,
             baseId: base_id,
             tableIdOrName: table_id,
