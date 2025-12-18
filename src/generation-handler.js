@@ -17,7 +17,7 @@ export default async function startGeneration({
     
     if (!enoteca) {
         logger.error("Enoteca is required", {
-            location: "startGeneration",
+            location: "src/generation-handler.js:startGeneration",
             enoteca: enoteca,
         });
         
@@ -27,28 +27,28 @@ export default async function startGeneration({
     }
     if (!access_token) {
         logger.warning("Missing access token, using default from environment variables", {
-            location: "startGeneration",
+            location: "src/generation-handler.js:startGeneration",
             access_token: access_token,
         });
         access_token = process.env.AIRTABLE_API_KEY;
     }
     if (!base_id) {
         logger.warning("Missing base id, using default from environment variables", {
-            location: "startGeneration",
+            location: "src/generation-handler.js:startGeneration",
             base_id: base_id,
         });
         base_id = process.env.AIRTABLE_BASE_ID;
     }
     if (!table_id) {
         logger.warning("Missing table id, using default from environment variables", {
-            location: "startGeneration",
+            location: "src/generation-handler.js:startGeneration",
             table_id: table_id,
         });
         table_id = process.env.AIRTABLE_INV_TAB_ID;
     }
     if (!out_tab_id) {
         logger.error("Missing out tab id, it is required", {
-            location: "startGeneration",
+            location: "src/generation-handler.js:startGeneration",
             out_tab_id: out_tab_id,
         });
         // TODO: reactivate throw error
@@ -56,7 +56,7 @@ export default async function startGeneration({
     }
     if (!out_record_id) {
         logger.error("Missing out record id, it is required", {
-            location: "startGeneration",
+            location: "src/generation-handler.js:startGeneration",
             out_record_id: out_record_id,
         });
         // TODO: reactivate throw error
@@ -92,33 +92,43 @@ export default async function startGeneration({
             throw new Error("ERROR: Error finding enoteca record ID");
         }
     }
-
-    // TODO: log found enoteca record id - REMOVE AFTER TESTING
-    logger.info("Obtain enoteca record id", {
-        enoteca_record_id: enotecaRecordId,
-        location: "src/generation-handler.js:startGeneration"
-    })
+    
+    // TODO: deubg logging - REMOVE AFTER TESTING
+    logger.info("STEP 1 - Obtained enoteca record ID - Success", {
+        location: "src/generation-handler.js:startGeneration",
+        enotecaRecordId: enotecaRecordId,
+    });
 
     // # 2. Costruisci il filterByFormula con le condizioni
-    let filterFormula = "{Carta dei Vini} = TRUE()";
+    // Nota: in Airtable un checkbox può essere testato anche come boolean diretto: `{Campo}`
+    // (equivalente a `{Campo}=TRUE()` ma più robusto)
+    let filterFormula = "{Carta dei Vini}";
     
     if (enotecaRecordId) {
-        // Aggiungi il filtro per Enoteca usando il record ID
-        // Per i campi link in Airtable (che sono array di record ID),
-        // possiamo usare FIND con ARRAYJOIN o controllare direttamente
-        // Prova prima con la sintassi diretta (supportata da Airtable per campi link)
-        // Se non funziona, usa: FIND("${enotecaRecordId}", ARRAYJOIN({Enoteca}, ",")) > 0
-        filterFormula = `AND({Carta dei Vini} = TRUE(), FIND("${enotecaRecordId}", ARRAYJOIN({Enoteca}, ",")) > 0)`;
+        // Aggiungi il filtro per Enoteca.
+        // Importante: a seconda della base, `{Enoteca}` può essere:
+        // - linked record field -> contiene record IDs
+        // - lookup/text field   -> contiene nomi
+        // Per evitare 0 record “misteriosi”, accettiamo entrambe le forme.
+        //
+        // Se `{Enoteca}` è linked: ARRAYJOIN({Enoteca}) produce una stringa di recordId.
+        // Se `{Enoteca}` è lookup: ARRAYJOIN({Enoteca}) produce una stringa di nomi.
+        const enotecaMatchFormula = `OR(` +
+          `FIND("${enotecaRecordId}", ARRAYJOIN({Enoteca}, ",")) > 0, ` +
+          `FIND("${String(enoteca).replace(/"/g, '\\"')}", ARRAYJOIN({Enoteca}, ",")) > 0` +
+        `)`;
+
+        filterFormula = `AND({Carta dei Vini}, ${enotecaMatchFormula})`;
     }
 
-    logger.info("Fetching data from Airtable with filter", {
-        location: "startGeneration",
+    logger.info("STEP 2 - Fetching data from Airtable with filter - Success", {
+        location: "generation-handler.js:startGeneration",
         filterFormula: filterFormula,
         enoteca: enoteca,
         enotecaRecordId: enotecaRecordId,
     });
 
-    // # 3. fetch data from Airtable con i filtri
+    // # 3. fetch data from Airtable with filter
     let data;
     try{
         // try to fetch data from Airtable
@@ -132,24 +142,23 @@ export default async function startGeneration({
     } catch (error) {
         // if error, log and throw
         logger.error("Error fetching data from Airtable", {
-            location: "startGeneration",
+            location: "src/generation-handler.js:startGeneration",
             error: error,
         });
         throw new Error("ERROR: Error fetching data from Airtable");
     }
 
-    // TODO: log data fetched from Airtable - REMOVE THIS AFTER TESTING
-    logger.info("Data fetched from Airtable", {
-        location: "startGeneration",
-        // results: data.records,
-        results_number: data.records.length,
+    logger.info("STEP 3 - Data fetched from Airtable with filter - Success", {
+        location: "src/generation-handler.js:startGeneration",
+        // data: data,
+        data_number: data.records.length,
     });
 
-    // TODO: 2. build payload with middleware (handlebars)
+    // TODO: # 4. build payload with middleware (handlebars)
     saveYamlWineList(data);
 
-    // TODO: 3. generate document
-    // TODO: 4. save document
+    // TODO: # 5. generate document
+    // TODO: # 6. save document
 }
 
 // Permetti l'invocazione diretta del file da CLI per lanciare startGeneration
