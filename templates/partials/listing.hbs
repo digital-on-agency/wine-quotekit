@@ -62,8 +62,14 @@
             <div class="wine-row-inner">
               <div class="wine-info">
                 <div class="wine-name">
-                  <strong>{{name}} - {{appellation}}</strong>
+                  <strong>{{name}}</strong>
                 </div>
+
+                {{#if note}}
+                  <div class="wine-note-line">
+                    <span class="wine-note">{{note}}</span>
+                  </div>
+                {{/if}}
 
                 {{#if grapes}}
                   <div class="wine-grapes-line">

@@ -13,6 +13,8 @@ export default async function startGeneration({
     out_tab_id,
     out_record_id
 }) {
+    // # 0. Param Validation
+    
     if (!enoteca) {
         logger.error("Enoteca is required", {
             location: "startGeneration",
@@ -62,31 +64,36 @@ export default async function startGeneration({
     }
 
     // # 1. Trova il record ID dell'enoteca
+
     let enotecaRecordId = null;
     if (enoteca) {
         try {
+            // Fetch the enoteca record ID from Airtable
             enotecaRecordId = await findEnotecaRecordId(enoteca, {
                 authToken: access_token,
                 baseId: base_id,
             });
             
+            // If the enoteca record ID is not found, log an error 
             if (!enotecaRecordId) {
-                // TODO: throw error, isn't a warning but an important error
-                logger.warning("Enoteca not found, filtering by name will be skipped", {
+                logger.error("Enoteca not found, filtering by name will be skipped - Error finding enoteca record ID", {
                     location: "src/generation-handler.js:startGeneration",
                     enoteca: enoteca,
+                    error: "Enoteca not found",
                 });
+                throw new Error("ERROR: Enoteca not found, filtering by name will be skipped - Error finding enoteca record ID");
             }
-        } catch (error) {
+        } catch (error) { // If an error occurs, log an error and throw an error
             logger.error("Error finding enoteca record ID", {
                 location: "src/generation-handler.js:startGeneration",
                 enoteca: enoteca,
                 error: error,
             });
-            // Non blocchiamo il flusso, continuiamo senza filtro enoteca
+            throw new Error("ERROR: Error finding enoteca record ID");
         }
     }
 
+    // TODO: log found enoteca record id - REMOVE AFTER TESTING
     logger.info("Obtain enoteca record id", {
         enoteca_record_id: enotecaRecordId,
         location: "src/generation-handler.js:startGeneration"

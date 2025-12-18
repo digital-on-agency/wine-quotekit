@@ -1,0 +1,5 @@
+{"level":"warn","time":"2025-12-18T09:12:40.055Z","pid":6063,"hostname":"Mac.homenet.telecomitalia.it","location":"startGeneration","msg":"Missing access token, using default from environment variables"}
+{"level":"error","time":"2025-12-18T09:12:40.055Z","pid":6063,"hostname":"Mac.homenet.telecomitalia.it","location":"startGeneration","msg":"Missing out tab id, it is required"}
+{"level":"error","time":"2025-12-18T09:12:40.055Z","pid":6063,"hostname":"Mac.homenet.telecomitalia.it","location":"startGeneration","msg":"Missing out record id, it is required"}
+{"level":"info","time":"2025-12-18T09:12:46.300Z","pid":6063,"hostname":"Mac.homenet.telecomitalia.it","location":"src/lib/api/airtable/airtableIndex.js:findEnotecaRecordId","currentName":"Porgi l'Altra Pancia","compName":"Porgi l'Altra Pancia","msg":"comparing enoteca name to filter"}
+{"level":"info","time":"2025-12-18T09:12:46.301Z","pid":6063,"hostname":"Mac.homenet.telecomitalia.it","enoteca_record_id":"recoBeLAxlhrj7jvw","location":"src/generation-handler.js:startGeneration","msg":"Obtain enoteca record id"}
