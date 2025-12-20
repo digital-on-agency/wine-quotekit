@@ -504,7 +504,9 @@ export function wineDataValidationAndNormalization(data, zoneMapping) {
   const warningRecords = [];
   const invalidRecords = [];
 
-  for (const record of data.records) {
+  // for (const record of data.records) {
+  for (let i = 0; i < data.length; i++) {
+    const record = data[i];
     let currentRecord = {};
     let invalidFields = [];
     let warningFields = [];
@@ -729,7 +731,16 @@ export function metaDataYamlBuilder(enoteca, simple_categories) {
     categories: elaborate_categories,
   };
 
-  return metaData;
+  const yamlOptions = {
+    indent: 2, // 2 spaces per indent
+    lineWidth: -1, // No line width limit
+    noRefs: true, // Disable YAML references
+    sortKeys: false, // Preserve key order
+  };
+
+  const yamlString = yaml.dump(metaData, yamlOptions);
+
+  return yamlString;
 }
 
 /** Retrieves a value from a map by key, or creates and stores it if missing.
@@ -853,7 +864,42 @@ export function wineDataYamlBuilder(data) {
   return yamlString;
 }
 
-export default async function saveYamlWineList(data, enoteca) {
+/** Generates the complete YAML representation of a wine list for a given enoteca.
+ *
+ * This function orchestrates the full data-processing pipeline required to
+ * transform raw Airtable wine records into a structured YAML document,
+ * suitable for PDF generation or digital menu consumption.
+ *
+ * Processing steps:
+ * 1. **Data cleaning** – removes unused fields and keeps only relevant columns.
+ * 2. **Zone mapping retrieval** – resolves zone IDs to metadata (name, priority).
+ * 3. **Data sorting** – orders wines by type, region, zone, and producer.
+ * 4. **Validation & normalization** – enforces data contracts and normalizes values.
+ * 5. **YAML building** – generates metadata and wine sections and merges them.
+ *
+ * @param {Object} data
+ * Raw Airtable response object containing wine records.
+ *
+ * @param {Object} enoteca
+ * The enoteca domain object used to generate metadata
+ * (name, description, logo, QR code, identifiers, etc.).
+ *
+ * @returns {Promise<string>}
+ * A promise that resolves to the full YAML string representing
+ * the enoteca wine list (metadata + wines).
+ *
+ * @throws {Error}
+ * Propagates any error thrown during data fetching, validation,
+ * sorting, or YAML generation.
+ *
+ * @notes
+ * - Invalid records are excluded from the final YAML output.
+ * - Records with warnings are tracked but still processed if valid.
+ * - Zone mapping is fetched asynchronously and used both for sorting
+ *   and for resolving human-readable zone names.
+ * - This function does not perform I/O operations (file writing).
+*/
+export default async function generateWineListYamlString(data, enoteca) {
   // # 0. Data Cleaning
   // clean data from unused columns and filter by 'Carta dei vini' and 'Enoteca'
   const cleanedData = wineDataCleaner(data);
@@ -868,18 +914,19 @@ export default async function saveYamlWineList(data, enoteca) {
 
   // # 3. Data validation (contract) and normalization
   const { validRecords, warningRecords, invalidRecords, categories } =
-    wineDataValidationAndNormalization(data, zoneMapping);
+    wineDataValidationAndNormalization(sortedData, zoneMapping);
 
   // # 4. YAML Builder: build yaml payload
   const metaDataYamlString = metaDataYamlBuilder(enoteca, categories);
   const winesYamlString = wineDataYamlBuilder(validRecords);
+
+  console.log("------------metaDataYamlString", typeof metaDataYamlString);
+  console.log("------------winesYamlString", typeof winesYamlString);
+  // console.log("------------metaDataYamlString", metaDataYamlString);
+  // console.log("------------winesYamlString", winesYamlString);
   const fullYamlString = `${metaDataYamlString}\n\n${winesYamlString}`;
 
-  // TODO: log fullYamlString - Remove after testing
-  logger.info("STEP 5 - Full YAML string built - Success", {
-    location: "src/lib/wineList.js:saveYamlWineList",
-    fullYamlString: fullYamlString,
-  });
+  // console.log("------------fullYamlString", fullYamlString);
 
   return fullYamlString;
 }
@@ -899,11 +946,9 @@ export default async function saveYamlWineList(data, enoteca) {
 // !  "Prezzo Vendita Bottiglia - IVA",
 // !  "IVA di Vendita in Euro",
 // !  "Affinamento ENG",
-// TODO: wine catalog contiene il riferimento al record, da capire se fare un check da qui (male) o farli arrivare già filtrati
-// ?  "Wine Catalog",
+// !  "Wine Catalog",
 // # il seguente è un altro filtro, il suo valore deve essere uguale al valore enoteca dato come parametro all'inizio dello script
-// TODO: enoteca contiene il riferimento al record, da capire se fare un check da qui (male) o farli arrivare già filtrati
-// ?  "Enoteca",
+// !  "Enoteca",
 // !  "Totale Caricati",
 // !  "Totale Scaricati",
 // !  "Giacenza",
@@ -916,7 +961,6 @@ export default async function saveYamlWineList(data, enoteca) {
 // *  "Zona",
 // *  "Luogo di Produzione",
 // *  "Tipologia",
-// TODO: devo ordinare per questo? chiedere a sone
 // *  "Priorità Zona",
 // !  "Immagine Vino",
 // *  "Prezzo In Carta Testo",
