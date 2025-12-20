@@ -227,6 +227,68 @@ export async function findEnotecaRecordId(
   }
 }
 
+/**
+ * Retrieves a single **Enoteca** record from Airtable by its record ID.
+ *
+ * This function acts as a thin, safe wrapper around the Airtable `getRecord`
+ * API, providing default configuration values and centralized error logging.
+ *
+ * @param {string} enotecaRecordId
+ * The Airtable record ID of the enoteca to retrieve.
+ *
+ * @param {Object} [options]
+ * Optional configuration overrides.
+ *
+ * @param {string} [options.authToken]
+ * Airtable API authentication token. Defaults to `AIRTABLE_AUTH_TOKEN`.
+ *
+ * @param {string} [options.baseId]
+ * Airtable base ID. Defaults to `AIRTABLE_BASE_ID`.
+ *
+ * @param {string} [options.enotecaTableId]
+ * Airtable table ID or name for the enoteca table.
+ * Defaults to `AIRTABLE_ENO_TAB_ID`.
+ *
+ * @returns {Promise<Object>}
+ * A promise that resolves to the Airtable record representing the enoteca.
+ *
+ * @throws {Error}
+ * Rethrows any error encountered during the Airtable request after logging it.
+ *
+ * @notes
+ * - Errors are logged with contextual metadata to aid debugging.
+ * - This function does not perform data normalization or validation.
+ * - Intended for internal data-fetching layers (not UI-facing).
+ */
+export async function getEnotecaData(
+  enotecaRecordId,
+  {
+    authToken = AIRTABLE_AUTH_TOKEN,
+    baseId = AIRTABLE_BASE_ID,
+    enotecaTableId = AIRTABLE_ENO_TAB_ID,
+  } = {},
+) {
+  try{
+
+    const enotecaData = await getRecord({
+      token: authToken,
+      baseId,
+      tableIdOrName: enotecaTableId,
+      recordId: enotecaRecordId,
+    });
+
+    return enotecaData;
+
+  } catch (error) {
+    logger.error("Error getting enoteca data", {
+      location: "src/lib/api/airtable/airtableIndex.js:getEnotecaData",
+      enotecaRecordId,
+      error: error.message,
+    });
+    throw error;
+  }
+}
+
 
 // Permetti l'invocazione diretta del file da CLI per lanciare fetchDefaultTableRecords
 if (process.argv[1] === new URL(import.meta.url).pathname || process.argv[1] === new URL(import.meta.url).href.replace("file://", "")) {
