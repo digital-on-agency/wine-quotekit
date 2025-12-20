@@ -191,23 +191,9 @@ export async function findEnotecaRecordId(
       // },
     });
 
-    // logger.info("Temp logging", {
-    //   location: "src/lib/api/airtable/airtableIndex.js:findEnotecaRecordId",
-    //   result_number: result.records.length,
-    //   result_record_keys: Object.keys(result.records[0]),
-    //   result_id: result.records[0].id,
-    //   result_name: result.records[0].fields.Nome,
-    //   results: result,
-    // })
-
     const res_list = result.records;
     
     for (const rec of res_list) {
-      logger.info("comparing enoteca name to filter", {
-        location: "src/lib/api/airtable/airtableIndex.js:findEnotecaRecordId",
-        currentName: rec.fields.Nome ? rec.fields.Nome : "NULL",
-        compName: enotecaName
-      });
       if (rec.fields.Nome === enotecaName) {
         return rec.id;
       }

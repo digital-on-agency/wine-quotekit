@@ -21,14 +21,16 @@ main_cover:
 categories:
   - id: "Rosso"
     name: "Vini Rossi"
-    subtitle: "La nostra selezione di rossi italiani e internazionali"
+    subtitle: "La nostra selezione di rossi"
     note: "Disponibilità dei vini soggetta a variazioni."
   - id: "Rosato"
     name: "Vini Rosati"
-    subtitle: "Rosati freschi e fruttati"
+    subtitle: "La nostra selezione di rosati"
+    note: "Disponibilità dei vini soggetta a variazioni."
   - id: "Bianco"
     name: "Vini Bianchi"
-    subtitle: "Bianchi freschi e minerali"
+    subtitle: "La nostra selezione di bianchi"
+    note: "Disponibilità dei vini soggetta a variazioni."
 
 
 # Qui potrai poi aggiungere le sezioni dei vini (che userai nella pagina destra)

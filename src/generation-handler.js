@@ -6,6 +6,7 @@ import saveYamlWineList from "./lib/wineList.js";
 dotenv.config();
 
 export default async function startGeneration({
+    // TODO: cambiare enoteca dal nome al record id
     enoteca = "Porgi l'Altra Pancia",
     access_token = process.env.AIRTABLE_API_KEY,
     base_id = process.env.AIRTABLE_BASE_ID,
@@ -92,12 +93,7 @@ export default async function startGeneration({
             throw new Error("ERROR: Error finding enoteca record ID");
         }
     }
-    
-    // TODO: deubg logging - REMOVE AFTER TESTING
-    logger.info("STEP 1 - Obtained enoteca record ID - Success", {
-        location: "src/generation-handler.js:startGeneration",
-        enotecaRecordId: enotecaRecordId,
-    });
+
 
     // # 2. Costruisci il filterByFormula con le condizioni
     // Nota: in Airtable un checkbox può essere testato anche come boolean diretto: `{Campo}`
