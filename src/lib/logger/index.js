@@ -91,4 +91,58 @@ export const log = {
   info: (message, meta = {}) => logger.info(message, meta),
 };
 
+/**
+ * Count how many executions have occurred today by counting
+ * "------- NEW EXECUTION -------" messages in today's log file.
+ * @returns {number} The execution number (1-based)
+ */
+function getExecutionNumber() {
+  const logFilePath = getTodayLogFilePath();
+  try {
+    if (!fs.existsSync(logFilePath)) {
+      return 1; // First execution of the day
+    }
+    
+    const logContent = fs.readFileSync(logFilePath, "utf-8");
+    const lines = logContent.split("\n").filter((line) => line.trim() !== "");
+    
+    // Count occurrences of "------- NEW EXECUTION -------"
+    let count = 0;
+    for (const line of lines) {
+      try {
+        const logEntry = JSON.parse(line);
+        if (logEntry.msg === "------- NEW EXECUTION -------") {
+          count++;
+        }
+      } catch {
+        // Skip invalid JSON lines
+        continue;
+      }
+    }
+    
+    return count + 1; // Next execution number
+  } catch (err) {
+    // If we can't read the file, assume it's the first execution
+    // eslint-disable-next-line no-console
+    console.error("[logger] Failed to read log file for execution count:", err);
+    return 1;
+  }
+}
+
+/**
+ * Write the initial execution log when the module is loaded.
+ */
+function writeInitialExecutionLog() {
+  const executionNumber = getExecutionNumber();
+  const timestamp = new Date().toISOString();
+  
+  logger.info("------- NEW EXECUTION -------", {
+    timestamp,
+    executionNumber,
+  });
+}
+
+// Write the initial execution log when the module is loaded
+writeInitialExecutionLog();
+
 
