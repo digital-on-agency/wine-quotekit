@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { logger } from "./lib/logger/index.js";
-import { fetchDefaultTableRecords, findEnotecaRecordId } from "./lib/api/airtable/airtableIndex.js";
+import { fetchDefaultTableRecords, findEnotecaRecordId, getEnotecaData } from "./lib/api/airtable/airtableIndex.js";
 import saveYamlWineList from "./lib/wineList.js";
 
 dotenv.config();
@@ -11,6 +11,7 @@ export default async function startGeneration({
     access_token = process.env.AIRTABLE_API_KEY,
     base_id = process.env.AIRTABLE_BASE_ID,
     table_id = process.env.AIRTABLE_INV_TAB_ID,
+    enoteca_table_id = process.env.AIRTABLE_ENO_TAB_ID,
     out_tab_id,
     out_record_id
 }) {
@@ -151,7 +152,23 @@ export default async function startGeneration({
     });
 
     // TODO: # 4. build payload with middleware (handlebars)
-    saveYamlWineList(data);
+    // get enoteca data (name, logo_url, qr_image_url, digital_menu_url)
+    const rawEnotecaData = await getEnotecaData(enotecaRecordId, {
+        authToken: access_token,
+        baseId: base_id,
+        enotecaTableId: enoteca_table_id,
+    });
+
+    const enotecaData = {
+        id: rawEnotecaData.fields["Nome"].toLowerCase().replace(/ /g, "-"),
+        name: rawEnotecaData.fields["Nome"],
+        description: rawEnotecaData.fields["Introduzione"],
+        logo_url: rawEnotecaData.fields["Logo"][0].url,
+        qr_image_url: rawEnotecaData.fields["QR Code"][0].url,
+        digital_menu_url: rawEnotecaData.fields["URL Menu Digitale"],
+    }
+
+    const yamlString = await saveYamlWineList(data, enotecaData);
 
     // TODO: # 5. generate document
     // TODO: # 6. save document

@@ -450,11 +450,13 @@ export function wineDataSorter(data, zoneMapping = undefined) {
  *   validRecords: Array<Record<string, any>>;
  *   warningRecords: Array<{ id: string; warningFields: string[] }>;
  *   invalidRecords: Array<{ id: string; invalidFields: string[] }>;
+ *   categories: Array<string>;
  * }}
  * An object containing:
  * - `validRecords`: normalized wine objects
  * - `warningRecords`: record IDs plus missing optional fields
  * - `invalidRecords`: record IDs plus missing required/invalid fields
+ * - `categories`: list of categories
  *
  * @throws {Error}
  * Throws if a zone ID is missing when resolving `"Zona"` (defensive check).
@@ -502,7 +504,7 @@ export function wineDataValidationAndNormalization(data, zoneMapping) {
   const warningRecords = [];
   const invalidRecords = [];
 
-  for (const record of data) {
+  for (const record of data.records) {
     let currentRecord = {};
     let invalidFields = [];
     let warningFields = [];
@@ -627,8 +629,12 @@ export function wineDataValidationAndNormalization(data, zoneMapping) {
       currentRecord.region = record.fields["Regione"];
     }
 
-    // add category to categories array
-    if (!categories.includes(currentRecord.category)) {
+    // add category to categories array (only if category exists and is a string)
+    if (
+      currentRecord.category &&
+      typeof currentRecord.category === "string" &&
+      !categories.includes(currentRecord.category)
+    ) {
       categories.push(currentRecord.category);
     }
 
@@ -685,16 +691,23 @@ export function wineDataValidationAndNormalization(data, zoneMapping) {
 export function metaDataYamlBuilder(enoteca, simple_categories) {
   const tod = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
 
-  const elaborate_categories = simple_categories.map((name) => ({
+  // Filter and validate categories: only keep non-empty strings
+  const validCategories = (simple_categories || []).filter(
+    (name) => name && typeof name === "string" && name.trim() !== ""
+  );
+
+  const elaborate_categories = validCategories.map((name) => ({
     id: name.toLowerCase().replace(/ /g, "-"),
     name: name,
     subtitle: `La nostra selezione di ${name}`,
     note: "Disponibilità dei vini soggetta a variazioni.",
   }));
 
+  console.log("------------enoteca", enoteca);
+
   const metaData = {
     meta: {
-      id: `${tod}-${enoteca.name.toLowerCase().replace(/ /g, "-")}`,
+      id: `${tod}-${enoteca.id}`,
       date: tod,
       ref: `${tod}-${enoteca.id}`,
     },
@@ -748,13 +761,8 @@ export function metaDataYamlBuilder(enoteca, simple_categories) {
  * - The factory function is called **only if** the key is not present.
  * - The newly created value is immediately stored in the map.
  */
-export function wineDataYamlBuilder(data, zoneMapping) {
-  // # 1. Data validation (contract) and normalization
-
-  const { validRecords, warningRecords, invalidRecords, categories } =
-    wineDataValidationAndNormalization(data, zoneMapping);
-
-  // # 2. Grouping step: category → region → zone → items
+export function wineDataYamlBuilder(data) {
+  // # 1. Grouping step: category → region → zone → items
   // Build nested maps to group records by category, then region, then zone
   // Structure: Map<category, Map<region, Map<zone, Array<item>>>>
   /** Retrieves a value from a map by key, or creates and stores it if missing.
@@ -797,7 +805,7 @@ export function wineDataYamlBuilder(data, zoneMapping) {
 
   const groupedYamlPayload = new Map();
   // For each valid record, group by category → region → zone
-  for (const record of validRecords) {
+  for (const record of data) {
     const categoryMap = getOrCreate(
       groupedYamlPayload,
       record.category,
@@ -811,7 +819,7 @@ export function wineDataYamlBuilder(data, zoneMapping) {
     zoneItems.push(itemData);
   }
 
-  // # 3. Shaping step: convert nested maps to YAML contract structure
+  // # 2. Shaping step: convert nested maps to YAML contract structure
   // Transform grouped structure into final contract: array of sections with items
   // Structure: [{ category, region, zone, items: [...] }, ...]
   const winesArray = [];
@@ -829,7 +837,7 @@ export function wineDataYamlBuilder(data, zoneMapping) {
     }
   }
 
-  // # 4. Serialization step: shape final contract object and serialize to YAML
+  // # 3. Serialization step: shape final contract object and serialize to YAML
   // Final contract: { wines: [{ category, region, zone, items: [...] }, ...] }
   const yamlContract = { wines: winesArray };
 
@@ -845,31 +853,7 @@ export function wineDataYamlBuilder(data, zoneMapping) {
   return yamlString;
 }
 
-/** Atomically writes content to a file.
- * The file is either fully written or not modified at all.
- *
- * @param {string} filePath - Absolute or relative target file path
- * @param {string} content - File content to write
- */
-export async function writeFileAtomic(filePath, content) {
-  const dir = path.dirname(filePath);
-  const base = path.basename(filePath);
-  const tempPath = path.join(dir, `.${base}.tmp`);
-
-  // Ensure target directory exists
-  await fs.mkdir(dir, { recursive: true });
-
-  // Write to temp file
-  await fs.writeFile(tempPath, content, {
-    encoding: "utf8",
-    flag: "w",
-  });
-
-  // Rename is atomic on same filesystem
-  await fs.rename(tempPath, filePath);
-}
-
-export default async function saveYamlWineList(data) {
+export default async function saveYamlWineList(data, enoteca) {
   // # 0. Data Cleaning
   // clean data from unused columns and filter by 'Carta dei vini' and 'Enoteca'
   const cleanedData = wineDataCleaner(data);
@@ -882,8 +866,22 @@ export default async function saveYamlWineList(data) {
   // # 2. Data Sorting: sort by type - region - zone - producer
   const sortedData = wineDataSorter(cleanedData, zoneMapping);
 
-  // # 3. YAML Builder: build yaml payload
-  const winesYamlString = wineDataYamlBuilder(sortedData, zoneMapping);
+  // # 3. Data validation (contract) and normalization
+  const { validRecords, warningRecords, invalidRecords, categories } =
+    wineDataValidationAndNormalization(data, zoneMapping);
+
+  // # 4. YAML Builder: build yaml payload
+  const metaDataYamlString = metaDataYamlBuilder(enoteca, categories);
+  const winesYamlString = wineDataYamlBuilder(validRecords);
+  const fullYamlString = `${metaDataYamlString}\n\n${winesYamlString}`;
+
+  // TODO: log fullYamlString - Remove after testing
+  logger.info("STEP 5 - Full YAML string built - Success", {
+    location: "src/lib/wineList.js:saveYamlWineList",
+    fullYamlString: fullYamlString,
+  });
+
+  return fullYamlString;
 }
 
 // *  "id"
