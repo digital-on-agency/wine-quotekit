@@ -18,6 +18,8 @@ import {
 } from "./lib/api/airtable/airtableIndex.js";
 // wine list utils functions
 import generateWineListYamlString from "./lib/wineList.js";
+// build function for PDF generation
+import { build } from "./build.js";
 
 // # -------------------------- GLOBAL VARIABLES --------------------------
 
@@ -32,6 +34,9 @@ const PROJECT_ROOT = path.resolve(__dirname, "..");
 
 // Output directory for menu YAML data files
 const MENU_DATA_DIR = path.join(PROJECT_ROOT, "data", "menu");
+
+// Output directory for PDF files
+const PDF_OUTPUT_DIR = path.join(PROJECT_ROOT, "out");
 
 // # -------------------------- FUNCTIONS --------------------------
 
@@ -493,15 +498,35 @@ export default async function startGeneration({
     mode: 0o644,
   });
 
-  logger.info("YAML string saved to file", {
+  logger.info("YAML file saved", {
     location: "src/generation-handler.js:startGeneration",
     absPath: absPath,
     bytes: bytes,
     yamlFileRealtivePath: yamlFileRealtivePath,
   });
 
-  // TODO: # 5. generate document
-  // TODO: # 6. save document
+  // TODO: # 5. generate document
+  // Generate PDF document from YAML file
+  try {
+    logger.info("Starting PDF generation", {
+      location: "src/generation-handler.js:startGeneration",
+      yamlPath: absPath,
+    });
+    
+    await build(absPath, { outputDir: PDF_OUTPUT_DIR });
+    
+    logger.info("PDF generation completed successfully", {
+      location: "src/generation-handler.js:startGeneration",
+      yamlPath: absPath,
+    });
+  } catch (error) {
+    logger.error("Error generating PDF", {
+      location: "src/generation-handler.js:startGeneration",
+      yamlPath: absPath,
+      error: error,
+    });
+    throw error;
+  }
 }
 
 // Permetti l'invocazione diretta del file da CLI per lanciare startGeneration

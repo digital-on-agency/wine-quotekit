@@ -1,15 +1,17 @@
+// # -------------------------- IMPORT DEPENDENCIES --------------------------
+// logger
 import { logger } from "./logger/index.js";
-import { getRecord } from "../lib/api/airtable/airtableApi.js";
-import { fetchDefaultTableRecords } from "./api/airtable/airtableIndex.js";
+// environment variables
 import dotenv from "dotenv";
-import yaml from "js-yaml";
-import fs from "fs";
-import path from "path";
-
 dotenv.config();
-
 const { AIRTABLE_AUTH_TOKEN, AIRTABLE_BASE_ID, AIRTABLE_ZONE_TAB_ID } =
-  process.env;
+process.env;
+// yaml: library for YAML serialization
+import yaml from "js-yaml";
+// airtable api
+import { fetchDefaultTableRecords, getEnotecaDataById } from "./api/airtable/airtableIndex.js";
+
+// # -------------------------- FUNCTIONS --------------------------
 
 /** Cleans and normalizes raw Airtable wine list records by stripping out
  * all unnecessary fields and keeping only a predefined whitelist.
@@ -478,7 +480,33 @@ export function wineDataSorter(data, zoneMapping = undefined) {
  * - Records with warnings are tracked separately but are currently not included in `validRecords`.
  *   (If desired, warnings could still be emitted as valid outputs in a future iteration.)
  */
-export function wineDataValidationAndNormalization(data, zoneMapping) {
+export async function wineDataValidationAndNormalization(data, zoneMapping) {
+  // Helper function to extract value from Airtable AI fields
+  // Handles both simple strings and objects with { state, value, isStale }
+  const extractValue = (field) => {
+    if (!field) return null;
+    if (typeof field === "string") return field;
+    if (typeof field === "object" && field !== null) {
+      // Handle array case (e.g., production_location can be an array)
+      if (Array.isArray(field)) {
+        // If array contains objects with value, extract values
+        return field
+          .map((item) => {
+            if (typeof item === "object" && item !== null && item.value) {
+              return item.value;
+            }
+            return item;
+          })
+          .join(", ");
+      }
+      // Handle object with value property
+      if (field.value !== undefined) {
+        return field.value;
+      }
+    }
+    return field;
+  };
+
   const getZoneName = (zoneId) => {
     if (!zoneId) {
       logger.error("Zone ID not found", {
@@ -504,7 +532,7 @@ export function wineDataValidationAndNormalization(data, zoneMapping) {
   const warningRecords = [];
   const invalidRecords = [];
 
-  // for (const record of data.records) {
+  // Process records sequentially to handle async producer lookup
   for (let i = 0; i < data.length; i++) {
     const record = data[i];
     let currentRecord = {};
@@ -525,27 +553,36 @@ export function wineDataValidationAndNormalization(data, zoneMapping) {
     if (!record.fields["Produttore"] || record.fields["Produttore"] === "") {
       invalidFields.push("Produttore");
     } else {
-      currentRecord.producer = record.fields["Produttore"];
+      // currentRecord.producer = record.fields["Produttore"];
+      try {
+        const producerData = await getEnotecaDataById(record.fields["Produttore"]);
+        currentRecord.producer = producerData.fields["Nome"];
+      } catch (error) {
+        invalidFields.push("Produttore");
+        logger.error("Error getting producer data by id", {
+          location: "src/lib/wineList.js:wineDataValidationAndNormalization",
+          producerId: record.fields["Produttore"],
+          error: error.message,
+        });
+      }
     }
 
     // grapes (lista vitigni ai) - OPTIONAL, if missing IGNORE FIELD
-    if (
-      !record.fields["Lista Vitigni AI"] ||
-      record.fields["Lista Vitigni AI"] === ""
-    ) {
+    const grapesValue = extractValue(record.fields["Lista Vitigni AI"]);
+    if (!grapesValue || grapesValue === "") {
       warningFields.push("Lista Vitigni AI");
     } else {
-      currentRecord.grapes = record.fields["Lista Vitigni AI"];
+      currentRecord.grapes = grapesValue;
     }
 
     // production_location (luogo di produzione) - OPTIONAL, if missing IGNORE FIELD
-    if (
-      !record.fields["Luogo di Produzione"] ||
-      record.fields["Luogo di Produzione"] === ""
-    ) {
+    const productionLocationValue = extractValue(
+      record.fields["Luogo di Produzione"]
+    );
+    if (!productionLocationValue || productionLocationValue === "") {
       warningFields.push("Luogo di Produzione");
     } else {
-      currentRecord.production_location = record.fields["Luogo di Produzione"];
+      currentRecord.production_location = productionLocationValue;
     }
 
     // zone - REQUIRED, if missing SKIP
@@ -556,13 +593,11 @@ export function wineDataValidationAndNormalization(data, zoneMapping) {
     }
 
     // aging (affinamento ai) - OPTIONAL, if missing IGNORE FIELD
-    if (
-      !record.fields["Affinamento AI"] ||
-      record.fields["Affinamento AI"] === ""
-    ) {
+    const agingValue = extractValue(record.fields["Affinamento AI"]);
+    if (!agingValue || agingValue === "") {
       warningFields.push("Affinamento AI");
     } else {
-      currentRecord.aging = record.fields["Affinamento AI"];
+      currentRecord.aging = agingValue;
     }
 
     // price_eur (Prezzo In Carta Testo) - REQUIRED, if missing SKIP
@@ -607,14 +642,12 @@ export function wineDataValidationAndNormalization(data, zoneMapping) {
     }
 
     // abv (alcolicità ai) - OPTIONAL, if missing IGNORE FIELD
-    if (
-      !record.fields["Alcolicità AI"] ||
-      record.fields["Alcolicità AI"] === ""
-    ) {
+    const abvValue = extractValue(record.fields["Alcolicità AI"]);
+    if (!abvValue || abvValue === "") {
       warningFields.push("Alcolicità AI");
     } else {
       // utilizza il valore originale di "Alcolicità AI" senza standardizzare
-      currentRecord.abv = record.fields["Alcolicità AI"];
+      currentRecord.abv = abvValue;
     }
 
     // category - REQUIRED, if missing SKIP
@@ -914,7 +947,7 @@ export default async function generateWineListYamlString(data, enoteca) {
 
   // # 3. Data validation (contract) and normalization
   const { validRecords, warningRecords, invalidRecords, categories } =
-    wineDataValidationAndNormalization(sortedData, zoneMapping);
+    await wineDataValidationAndNormalization(sortedData, zoneMapping);
 
   // # 4. YAML Builder: build yaml payload
   const metaDataYamlString = metaDataYamlBuilder(enoteca, categories);

@@ -3,35 +3,35 @@
 # e un path all'icona corrispondente
 
 categories:
-  - id: "Rosso"
-    name: "Vini Rossi"
-    subtitle: "La nostra selezione di rossi italiani e internazionali"
-    note: "Disponibilità dei vini soggetta a variazioni."
-    icon_path: "../assets/img/icon-red-wine.png"
-    icon_alt: "Icona vini rossi"
-
-  - id: "Bianco"
+  - id: "Vini Bianchi"
     name: "Vini Bianchi"
     subtitle: "Bianchi freschi e minerali"
     note: "Disponibilità dei vini soggetta a variazioni."
     icon_path: "../assets/img/icon-white-wine.png"
     icon_alt: "Icona vini bianchi"
 
-  - id: "Rosato"
+  - id: "Vini Rossi"
+    name: "Vini Rossi"
+    subtitle: "La nostra selezione di rossi italiani e internazionali"
+    note: "Disponibilità dei vini soggetta a variazioni."
+    icon_path: "../assets/img/icon-red-wine.png"
+    icon_alt: "Icona vini rossi"
+
+  - id: "Vini Rosati"
     name: "Vini Rosati"
     subtitle: "Rosati freschi e fruttati"
     note: "Disponibilità dei vini soggetta a variazioni."
     icon_path: "../assets/img/icon-pink-wine.png"
     icon_alt: "Icona vini rosati"
 
-  - id: "Dessert"
+  - id: "Vini Dolci"
     name: "Vini Dolci"
     subtitle: "Dolci fruttati e dolci"
     note: "Disponibilità dei vini soggetta a variazioni."
     icon_path: "../assets/img/icon-dessert-wine.png"
     icon_alt: "Icona vini dolci"
 
-  - id: "Sparkling"
+  - id: "Vini Spumanti"
     name: "Vini Spumanti"
     subtitle: "Spumanti freschi e aromatici"
     note: "Disponibilità dei vini soggetta a variazioni."
