@@ -475,12 +475,15 @@ export default async function startGeneration({
     digital_menu_url: rawEnotecaData.fields["URL Menu Digitale"],
   };
 
+  const today = new Date();
+  const dateString = today.toISOString().slice(0, 10); // YYYY-MM-DD
+  const fileName = `${dateString} - Carta dei Vini - ${enotecaData.id}.yaml`;
+
   // Get YAML string for wine list, restaurant and meta data
   const yamlString = await generateWineListYamlString(data, enotecaData);
 
   // Save YAML string to file
-  // TODO: change the directory name to the enoteca id and the file name to the date
-  const yamlFileRealtivePath = path.join("tempEnoDir", "temp.yaml");
+  const yamlFileRealtivePath = path.join(enotecaData.id, fileName);
 
   const { absPath, bytes } = await writeFileAtomicSafe({
     baseDir: MENU_DATA_DIR,
