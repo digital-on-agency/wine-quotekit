@@ -14,8 +14,7 @@ import { logger } from "../../../lib/logger/index.js";
 
 const { AIRTABLE_AUTH_TOKEN, AIRTABLE_BASE_ID, AIRTABLE_INV_TAB_ID, AIRTABLE_ENO_TAB_ID } = process.env;
 
-/**
- * Fetches **all** records from a default Airtable table, automatically handling
+/** Fetches **all** records from a default Airtable table, automatically handling
  * Airtable pagination (`offset`) and returning a single aggregated result.
  *
  * This helper is optimized for a “default base/table” setup:
@@ -137,17 +136,53 @@ export async function fetchDefaultTableRecords(
   return finalResult;
 }
 
-/**
- * Trova il record ID dell'enoteca dalla tabella delle enoteche basandosi sul nome.
- * 
- * @param {string} enotecaName - Il nome dell'enoteca da cercare
- * @param {Object} [options={}]
+/** Finds and returns the Airtable **record ID** of an *enoteca* by matching its name.
+ *
+ * This utility queries the configured Airtable table (defaults to `AIRTABLE_ENO_TAB_ID`)
+ * and attempts to resolve the record whose `{Nome}` (or the configured `nameField`)
+ * equals the provided `enotecaName`.
+ *
+ * @param {string} enotecaName
+ * The *enoteca* name to search for (must match the Airtable field value).
+ *
+ * @param {Object} [options]
+ * Optional configuration overrides.
+ *
  * @param {string} [options.authToken=AIRTABLE_AUTH_TOKEN]
+ * Airtable **Personal Access Token (PAT)** used to authenticate the request.
+ *
  * @param {string} [options.baseId=AIRTABLE_BASE_ID]
+ * The Airtable base ID containing the enoteca table.
+ *
  * @param {string} [options.enotecaTableId=AIRTABLE_ENO_TAB_ID]
- * @param {string} [options.nameField="Nome"] - Il nome del campo che contiene il nome dell'enoteca
- * 
- * @returns {Promise<string|null>} - Il record ID dell'enoteca o null se non trovata
+ * The Airtable table ID or table name where enoteca records are stored.
+ *
+ * @param {string} [options.nameField="Nome"]
+ * The Airtable field name used for matching the enoteca name.
+ *
+ * @returns {Promise<string | null>}
+ * A promise that resolves to the matching Airtable record ID, or `null` if `enotecaName`
+ * is missing or no record is found.
+ *
+ * @throws {Error}
+ * Throws when required Airtable configuration is missing (`authToken`, `baseId`, or `enotecaTableId`)
+ * or when the underlying Airtable request fails.
+ *
+ * @usage
+ * ```ts
+ * const recordId = await findEnotecaRecordId("Enoteca Rossi");
+ * if (!recordId) {
+ *   console.log("Not found");
+ * } else {
+ *   console.log("Found:", recordId);
+ * }
+ * ```
+ *
+ * @notes
+ * - The function logs a *warning* and returns `null` if `enotecaName` is falsy.
+ * - Name values are escaped to be safely used in Airtable formulas (single quotes are doubled).
+ * - The implementation may use `filterByFormula` for server-side filtering (recommended),
+ *   or fall back to client-side scanning depending on how `listRecords` is invoked.
  */
 export async function findEnotecaRecordId(
   enotecaName,
@@ -227,8 +262,7 @@ export async function findEnotecaRecordId(
   }
 }
 
-/**
- * Retrieves a single **Enoteca** record from Airtable by its record ID.
+/** Retrieves a single **Enoteca** record from Airtable by its record ID.
  *
  * This function acts as a thin, safe wrapper around the Airtable `getRecord`
  * API, providing default configuration values and centralized error logging.
@@ -289,6 +323,32 @@ export async function getEnotecaData(
   }
 }
 
+export async function getEnotecaDataById(
+  enotecaId,
+  {
+    authToken = AIRTABLE_AUTH_TOKEN,
+    baseId = AIRTABLE_BASE_ID,
+    enotecaTableId = AIRTABLE_ENO_TAB_ID,
+  } = {},
+) {
+  try{
+    const enotecaData = await getRecord({
+      token: authToken,
+      baseId,
+      tableIdOrName: enotecaTableId,
+      recordId: enotecaId,
+    });
+
+    return enotecaData;
+  } catch (error) {
+    logger.error("Error getting enoteca data by id", {
+      location: "src/lib/api/airtable/airtableIndex.js:getEnotecaDataById",
+      enotecaId,
+      error: error.message,
+    });
+    throw error;
+  }
+}
 
 // Permetti l'invocazione diretta del file da CLI per lanciare fetchDefaultTableRecords
 if (process.argv[1] === new URL(import.meta.url).pathname || process.argv[1] === new URL(import.meta.url).href.replace("file://", "")) {
