@@ -15,6 +15,7 @@ import {
   fetchDefaultTableRecords,
   findEnotecaRecordId,
   getEnotecaData,
+  loadWineListToAirtable,
 } from "./lib/api/airtable/airtableIndex.js";
 // wine list utils functions
 import generateWineListYamlString from "./lib/wineList.js";
@@ -106,12 +107,17 @@ export async function writeFileAtomicSafe({
   // * Input validation & invariants
   // Ensure baseDir is provided and is an absolute path
   if (!baseDir || typeof baseDir !== "string" || !path.isAbsolute(baseDir)) {
-    throw new Error("Invalid baseDir: must be a valid absolute path");
+    throw new Error("Invalid baseDir: must be a valid absolute path", {
+      location: "src/generation-handler.js:writeFileAtomicSafe",
+    });
   }
 
   // Ensure relativePath is provided and is NOT an absolute path
   if (!relativePath || typeof relativePath !== "string") {
-    throw new Error("Invalid relativePath: must be a valid string");
+    throw new Error("Invalid relativePath: must be a valid string", {
+      location: "src/generation-handler.js:writeFileAtomicSafe",
+      relativePath: relativePath,
+    });
   }
 
   // * Path normalization & security
@@ -126,7 +132,11 @@ export async function writeFileAtomicSafe({
 
   // Verify that the resolved target path is strictly inside baseDir
   if (!absTarget.startsWith(absBase)) {
-    throw new Error("Invalid relativePath: target path escapes baseDir");
+    throw new Error("Invalid relativePath: target path escapes baseDir", {
+      location: "src/generation-handler.js:writeFileAtomicSafe",
+      absTarget: absTarget,
+      absBase: absBase,
+    });
   }
 
   // * Target directory preparation
@@ -137,13 +147,19 @@ export async function writeFileAtomicSafe({
   try {
     // Create directory if it doesn't exist (recursively)
     await fs.mkdir(dir, { recursive: true });
-    
+
     // Verify that the path is actually a directory
     const stat = await fs.stat(dir);
     if (!stat.isDirectory()) {
-      throw new Error("Invalid baseDir: must be a directory");
+      throw new Error("Invalid baseDir: must be a directory", {
+        location: "src/generation-handler.js:writeFileAtomicSafe",
+        absTarget: absTarget,
+        absBase: absBase,
+        dir: dir,
+        error: error,
+      });
     }
-    
+
     // Check if directory is writable
     await fs.access(dir, constants.W_OK);
   } catch (error) {
@@ -212,7 +228,11 @@ export async function writeFileAtomicSafe({
       // If you want strict no-overwrite semantics, you can fail if exists right now:
       try {
         await fs.access(absTarget);
-        throw new Error("Target already exists (overwrite=false).");
+        throw new Error("Target already exists (overwrite=false).", {
+          location: "src/generation-handler.js:writeFileAtomicSafe",
+          absTarget: absTarget,
+          overwrite: overwrite,
+        });
       } catch {}
     }
 
@@ -279,7 +299,7 @@ export async function writeFileAtomicSafe({
         error: closeError,
       });
     }
-    
+
     // * Error handling & cleanup
     // safely remove the temporary file
     try {
@@ -293,7 +313,7 @@ export async function writeFileAtomicSafe({
         error: unlinkError,
       });
     }
-    
+
     // Log the original error and rethrow it
     logger.error("Error writing file", {
       location: "src/generation-handler.js:writeFileAtomicSafe",
@@ -302,7 +322,7 @@ export async function writeFileAtomicSafe({
       tmpPath: tmpPath,
       error: error,
     });
-    
+
     // Rethrow the original error
     throw error;
   }
@@ -314,6 +334,7 @@ export default async function startGeneration({
   access_token = process.env.AIRTABLE_API_KEY,
   base_id = process.env.AIRTABLE_BASE_ID,
   table_id = process.env.AIRTABLE_INV_TAB_ID,
+  wine_list_tab_id = process.env.AIRTABLE_WINE_LIST_TAB_ID,
   enoteca_table_id = process.env.AIRTABLE_ENO_TAB_ID,
   out_tab_id,
   out_record_id,
@@ -332,13 +353,20 @@ export default async function startGeneration({
   }
   if (!access_token) {
     logger.warning(
-      "Missing access token, using default from environment variables",
+      "Missing access token, trying to use default from environment variables",
       {
         location: "src/generation-handler.js:startGeneration",
         access_token: access_token,
       }
     );
-    access_token = process.env.AIRTABLE_API_KEY;
+    // Try both possible environment variable names
+    access_token = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_AUTH_TOKEN;
+    if (!access_token) {
+      logger.error("No access token found in environment variables (AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN)", {
+        location: "src/generation-handler.js:startGeneration",
+      });
+      throw new Error("ERROR: access_token is required. Please set AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN environment variable");
+    }
   }
   if (!base_id) {
     logger.warning(
@@ -399,7 +427,12 @@ export default async function startGeneration({
           }
         );
         throw new Error(
-          "ERROR: Enoteca not found, filtering by name will be skipped - Error finding enoteca record ID"
+          "ERROR: Enoteca not found, filtering by name will be skipped - Error finding enoteca record ID",
+          {
+            location: "src/generation-handler.js:startGeneration",
+            enoteca: enoteca,
+            error: "Enoteca not found",
+          }
         );
       }
     } catch (error) {
@@ -409,7 +442,11 @@ export default async function startGeneration({
         enoteca: enoteca,
         error: error,
       });
-      throw new Error("ERROR: Error finding enoteca record ID");
+      throw new Error("ERROR: Error finding enoteca record ID", {
+        location: "src/generation-handler.js:startGeneration",
+        enoteca: enoteca,
+        error: error,
+      });
     }
   }
 
@@ -459,7 +496,10 @@ export default async function startGeneration({
       location: "src/generation-handler.js:startGeneration",
       error: error,
     });
-    throw new Error("ERROR: Error fetching data from Airtable");
+    throw new Error("ERROR: Error fetching data from Airtable", {
+      location: "src/generation-handler.js:startGeneration",
+      error: error,
+    });
   }
 
   // # 4. build payload with middleware (handlebars)
@@ -498,6 +538,7 @@ export default async function startGeneration({
     mode: 0o644,
   });
 
+  // Log the YAML file saved
   logger.info("YAML file saved", {
     location: "src/generation-handler.js:startGeneration",
     absPath: absPath,
@@ -505,16 +546,12 @@ export default async function startGeneration({
     yamlFileRealtivePath: yamlFileRealtivePath,
   });
 
-  // TODO: # 5. generate document
+  // # 5. generate and save the document
   // Generate PDF document from YAML file
   try {
-    logger.info("Starting PDF generation", {
-      location: "src/generation-handler.js:startGeneration",
-      yamlPath: absPath,
-    });
-    
     await build(absPath, { outputDir: PDF_OUTPUT_DIR });
-    
+
+    // Log the PDF generation completed successfully
     logger.info("PDF generation completed successfully", {
       location: "src/generation-handler.js:startGeneration",
       yamlPath: absPath,
@@ -526,6 +563,105 @@ export default async function startGeneration({
       error: error,
     });
     throw error;
+  }
+
+  // # 6. save the document to Airtable
+  // Validate required parameters before calling loadWineListToAirtable
+  // Final check: try to get access_token from environment if still missing
+  if (!access_token) {
+    access_token = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_AUTH_TOKEN;
+    if (!access_token) {
+      logger.error("access_token is required to save document to Airtable", {
+        location: "src/generation-handler.js:startGeneration",
+        access_token: access_token,
+        hasAIRTABLE_API_KEY: !!process.env.AIRTABLE_API_KEY,
+        hasAIRTABLE_AUTH_TOKEN: !!process.env.AIRTABLE_AUTH_TOKEN,
+      });
+      throw new Error("ERROR: access_token is required to save document to Airtable. Please set AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN environment variable");
+    }
+  }
+  if (!wine_list_tab_id) {
+    // Try to get from environment as fallback
+    wine_list_tab_id = process.env.AIRTABLE_WINE_LIST_TAB_ID;
+    if (!wine_list_tab_id) {
+      logger.error("wine_list_tab_id is required to save document to Airtable", {
+        location: "src/generation-handler.js:startGeneration",
+        wine_list_tab_id: wine_list_tab_id,
+      });
+      throw new Error("ERROR: wine_list_tab_id is required to save document to Airtable. Please set AIRTABLE_WINE_LIST_TAB_ID environment variable or pass it as parameter");
+    }
+  }
+  if (!enotecaRecordId) {
+    logger.error("enotecaRecordId is required to save document to Airtable", {
+      location: "src/generation-handler.js:startGeneration",
+      enotecaRecordId: enotecaRecordId,
+    });
+    throw new Error("ERROR: enotecaRecordId is required to save document to Airtable");
+  }
+
+  try {
+    // Convert dateString (YYYY-MM-DD) to Date object for loadWineListToAirtable
+    const dateObj = new Date(dateString);
+    if (isNaN(dateObj.getTime())) {
+      throw new Error(`Invalid date format: ${dateString}`);
+    }
+
+    // Log parameters before calling loadWineListToAirtable for debugging
+    logger.info("Calling loadWineListToAirtable with parameters", {
+      location: "src/generation-handler.js:startGeneration",
+      hasAccessToken: !!access_token,
+      base_id,
+      wine_list_tab_id,
+      enotecaRecordId,
+      dateString,
+      pdfPath: absPath,
+    });
+
+    const result = await loadWineListToAirtable(
+      access_token,
+      base_id,
+      wine_list_tab_id,
+      enotecaRecordId,
+      dateObj, // Pass Date object instead of string
+      "PDF Carta dei Vini",
+      absPath
+    );
+    logger.info("Document saved to Airtable successfully", {
+      location: "src/generation-handler.js:startGeneration",
+      result: result,
+    });
+  } catch (error) {
+    // Extract original error information
+    const originalLocation = error.location || error.originalLocation || "unknown";
+    const originalMessage = error.message || error.originalMessage || "Unknown error";
+    
+    logger.error("Error saving document to Airtable", {
+      location: "src/generation-handler.js:startGeneration",
+      error: error,
+      originalLocation,
+      originalMessage,
+      errorDetails: {
+        message: error.message,
+        status: error.status,
+        statusText: error.statusText,
+        airtable: error.airtable,
+      },
+    });
+    
+    // Create enhanced error with original location and message
+    const enhancedError = new Error(
+      `ERROR: Error saving document to Airtable. Original error from ${originalLocation}: ${originalMessage}`
+    );
+    enhancedError.cause = error;
+    enhancedError.location = "src/generation-handler.js:startGeneration";
+    enhancedError.originalLocation = originalLocation;
+    enhancedError.originalMessage = originalMessage;
+    if (error.status) enhancedError.status = error.status;
+    if (error.statusText) enhancedError.statusText = error.statusText;
+    if (error.airtable) enhancedError.airtable = error.airtable;
+    if (error.baseId) enhancedError.baseId = error.baseId;
+    if (error.tableIdOrName) enhancedError.tableIdOrName = error.tableIdOrName;
+    throw enhancedError;
   }
 }
 

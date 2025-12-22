@@ -6,13 +6,22 @@ export * from "./airtableApi.js";
 export * from "./airtableErrors.js";
 export * from "./airtableConfig.js";
 
-import { listRecords, getRecord } from "./airtableApi.js";
+import {
+  listRecords,
+  getRecord,
+  uploadRecordWithAttachment,
+} from "./airtableApi.js";
 import dotenv from "dotenv";
 dotenv.config();
 
 import { logger } from "../../../lib/logger/index.js";
 
-const { AIRTABLE_AUTH_TOKEN, AIRTABLE_BASE_ID, AIRTABLE_INV_TAB_ID, AIRTABLE_ENO_TAB_ID } = process.env;
+const {
+  AIRTABLE_AUTH_TOKEN,
+  AIRTABLE_BASE_ID,
+  AIRTABLE_INV_TAB_ID,
+  AIRTABLE_ENO_TAB_ID,
+} = process.env;
 
 /** Fetches **all** records from a default Airtable table, automatically handling
  * Airtable pagination (`offset`) and returning a single aggregated result.
@@ -22,7 +31,7 @@ const { AIRTABLE_AUTH_TOKEN, AIRTABLE_BASE_ID, AIRTABLE_INV_TAB_ID, AIRTABLE_ENO
  * - Allows overrides via the second argument
  * - Logs progress per page and a final completion summary
  *
- * @param {Record<string, any>} [params={}]  
+ * @param {Record<string, any>} [params={}]
  * Airtable list/query parameters forwarded to `listRecords`, such as:
  * - `filterByFormula`
  * - `view`
@@ -30,23 +39,23 @@ const { AIRTABLE_AUTH_TOKEN, AIRTABLE_BASE_ID, AIRTABLE_INV_TAB_ID, AIRTABLE_ENO
  * - `sort[]`
  * - `pageSize` (defaults to 100 if not provided)
  *
- * @param {Object} [options={}]  
+ * @param {Object} [options={}]
  * Optional overrides for the default Airtable configuration.
  *
- * @param {string} [options.authToken=AIRTABLE_AUTH_TOKEN]  
+ * @param {string} [options.authToken=AIRTABLE_AUTH_TOKEN]
  * Airtable Personal Access Token (PAT) used for authentication.
  *
- * @param {string} [options.baseId=AIRTABLE_BASE_ID]  
+ * @param {string} [options.baseId=AIRTABLE_BASE_ID]
  * The Airtable Base ID containing the default table.
  *
- * @param {string} [options.tableIdOrName=AIRTABLE_INV_TAB_ID]  
+ * @param {string} [options.tableIdOrName=AIRTABLE_INV_TAB_ID]
  * The table ID or table name used as the default target.
  *
- * @returns {Promise<{ records: any[] }>}  
+ * @returns {Promise<{ records: any[] }>}
  * A promise that resolves to an object containing all fetched records:
  * `{ records: [...] }`.
  *
- * @throws {Error}  
+ * @throws {Error}
  * Throws an error if any required configuration is missing:
  * - `AIRTABLE_AUTH_TOKEN` (or override)
  * - `AIRTABLE_BASE_ID` (or override)
@@ -72,26 +81,29 @@ export async function fetchDefaultTableRecords(
     authToken = AIRTABLE_AUTH_TOKEN,
     baseId = AIRTABLE_BASE_ID,
     tableIdOrName = AIRTABLE_INV_TAB_ID,
-  } = {},
+  } = {}
 ) {
   if (!authToken) {
     logger.error("AIRTABLE_AUTH_TOKEN (env or override) is required", {
       error: new Error("AIRTABLE_AUTH_TOKEN (env or override) is required"),
-      location: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+      location:
+        "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
     });
     throw new Error("AIRTABLE_AUTH_TOKEN (env or override) is required");
   }
   if (!baseId) {
     logger.error("AIRTABLE_BASE_ID (env or override) is required", {
       error: new Error("AIRTABLE_BASE_ID (env or override) is required"),
-      location: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+      location:
+        "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
     });
     throw new Error("AIRTABLE_BASE_ID (env or override) is required");
   }
   if (!tableIdOrName) {
     logger.error("AIRTABLE_INV_TAB_ID (env or override) is required", {
       error: new Error("AIRTABLE_INV_TAB_ID (env or override) is required"),
-      location: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+      location:
+        "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
     });
     throw new Error("AIRTABLE_INV_TAB_ID (env or override) is required");
   }
@@ -125,7 +137,6 @@ export async function fetchDefaultTableRecords(
 
     // Controlla se c'è un offset per la prossima pagina
     offset = result.offset || null;
-
   } while (offset);
 
   // Costruisci un risultato compatibile con la struttura originale
@@ -191,7 +202,7 @@ export async function findEnotecaRecordId(
     baseId = AIRTABLE_BASE_ID,
     enotecaTableId = AIRTABLE_ENO_TAB_ID,
     nameField = "Nome",
-  } = {},
+  } = {}
 ) {
   if (!enotecaName) {
     logger.warning("enotecaName is required for findEnotecaRecordId", {
@@ -215,7 +226,7 @@ export async function findEnotecaRecordId(
     // Escapa il nome per usarlo nella formula Airtable
     const escapedName = enotecaName.replace(/'/g, "''"); // Escape singoli apici per Airtable
     const filterFormula = `{${nameField}} = "${escapedName}"`;
-    
+
     const result = await listRecords({
       token: authToken,
       baseId,
@@ -227,7 +238,7 @@ export async function findEnotecaRecordId(
     });
 
     const res_list = result.records;
-    
+
     for (const rec of res_list) {
       if (rec.fields.Nome === enotecaName) {
         return rec.id;
@@ -300,10 +311,9 @@ export async function getEnotecaData(
     authToken = AIRTABLE_AUTH_TOKEN,
     baseId = AIRTABLE_BASE_ID,
     enotecaTableId = AIRTABLE_ENO_TAB_ID,
-  } = {},
+  } = {}
 ) {
-  try{
-
+  try {
     const enotecaData = await getRecord({
       token: authToken,
       baseId,
@@ -312,7 +322,6 @@ export async function getEnotecaData(
     });
 
     return enotecaData;
-
   } catch (error) {
     logger.error("Error getting enoteca data", {
       location: "src/lib/api/airtable/airtableIndex.js:getEnotecaData",
@@ -323,15 +332,52 @@ export async function getEnotecaData(
   }
 }
 
+/** Retrieves **Enoteca** data from Airtable by its record ID.
+ *
+ * This function is a thin wrapper around `getRecord` that:
+ * - Fetches a single Enoteca record using its Airtable `recordId`
+ * - Applies default configuration from environment variables when not provided
+ * - Logs and rethrows errors with contextual information
+ *
+ * @param {string} enotecaId
+ * The Airtable record ID of the Enoteca to retrieve.
+ *
+ * @param {object} [options]
+ * Optional configuration overrides.
+ *
+ * @param {string} [options.authToken=AIRTABLE_AUTH_TOKEN]
+ * Airtable Personal Access Token used for authentication.
+ *
+ * @param {string} [options.baseId=AIRTABLE_BASE_ID]
+ * Airtable Base ID containing the Enoteca table.
+ *
+ * @param {string} [options.enotecaTableId=AIRTABLE_ENO_TAB_ID]
+ * Airtable table ID or name for the Enoteca table.
+ *
+ * @returns {Promise<object>}
+ * A promise that resolves to the raw Airtable record object for the Enoteca.
+ *
+ * @throws {Error}
+ * Throws if the Airtable request fails or if required configuration is missing.
+ *
+ * @usage
+ * ```js
+ * const enoteca = await getEnotecaDataById("recXXXXXXXXXXXX");
+ * ```
+ *
+ * @notes
+ * - This function assumes the caller already knows the Enoteca record ID.
+ * - Errors are logged with context (`enotecaId` and source location) before being rethrown.
+ */
 export async function getEnotecaDataById(
   enotecaId,
   {
     authToken = AIRTABLE_AUTH_TOKEN,
     baseId = AIRTABLE_BASE_ID,
     enotecaTableId = AIRTABLE_ENO_TAB_ID,
-  } = {},
+  } = {}
 ) {
-  try{
+  try {
     const enotecaData = await getRecord({
       token: authToken,
       baseId,
@@ -350,11 +396,246 @@ export async function getEnotecaDataById(
   }
 }
 
-// Permetti l'invocazione diretta del file da CLI per lanciare fetchDefaultTableRecords
-if (process.argv[1] === new URL(import.meta.url).pathname || process.argv[1] === new URL(import.meta.url).href.replace("file://", "")) {
-  fetchDefaultTableRecords()
-    .catch(err => {
-      console.error("Errore in fetchDefaultTableRecords:", err);
-      process.exit(1);
+/**
+ * Creates a **Wine List** record in Airtable and uploads the generated PDF as an attachment.
+ *
+ * This helper:
+ * - Validates all required inputs (token/base/table/enoteca/date/attachment field/pdf path)
+ * - Normalizes the provided `data` parameter into a valid date
+ * - Builds the Airtable `fields` payload (title, linked Enoteca, ISO date)
+ * - Delegates the actual create+upload flow to `uploadRecordWithAttachment`
+ * - Logs success/failure with contextual metadata and rethrows on errors
+ *
+ * @param {string} token
+ * Airtable Personal Access Token (PAT) used to authenticate the request.
+ *
+ * @param {string} baseId
+ * Airtable Base ID where the wine list table lives.
+ *
+ * @param {string} tableIdOrName
+ * Airtable table identifier (table ID or table name) where the wine list record is created.
+ *
+ * @param {string} enoteca_id
+ * Airtable record ID of the Enoteca to link (must match Airtable link-field record IDs).
+ *
+ * @param {Date|string} data
+ * The wine list date. Accepts a `Date` instance or a date string parseable by `new Date(...)`.
+ * Used both for display (`DD-MM-YYYY`) and for Airtable storage (ISO 8601).
+ *
+ * @param {string} attachmentFieldIdOrName
+ * Target attachment field (ID or name) where the PDF file should be uploaded.
+ *
+ * @param {string} pdfPath
+ * Absolute or resolved filesystem path to the PDF file to upload.
+ *
+ * @param {string} [filename]
+ * Optional filename override for the attachment (useful to enforce a stable naming convention).
+ *
+ * @returns {Promise<object>}
+ * Resolves to the created Airtable record returned by `uploadRecordWithAttachment`
+ * (typically including `id`, `fields`, and attachment metadata).
+ *
+ * @throws {Error}
+ * Throws if:
+ * - Any required parameter is missing/empty
+ * - `data` cannot be parsed into a valid date
+ * - The Airtable create/upload request fails
+ *
+ * @usage
+ * ```js
+ * const record = await loadWineListToAirtable(
+ *   process.env.AIRTABLE_AUTH_TOKEN,
+ *   process.env.AIRTABLE_BASE_ID,
+ *   "Carta Vini",
+ *   "recEnoteca123",
+ *   new Date(),
+ *   "PDF Carta dei Vini",
+ *   "/abs/path/to/output.pdf",
+ *   "2025-01-01_Carta-dei-Vini_MyEnoteca.pdf"
+ * );
+ * ```
+ *
+ * @notes
+ * - The `"Enoteca"` field is treated as a link field and is sent as an array: `[enoteca_id]`.
+ * - The `"Carta dei Vini"` title is generated as `"Carta dei Vini DD-MM-YYYY"`.
+ * - The `"Data"` field is stored as ISO 8601 when a `Date` is acknowledges; otherwise the string is forwarded as-is.
+ * - Attachment upload behavior depends on the implementation of `uploadRecordWithAttachment`.
+ */
+export async function loadWineListToAirtable(
+  token,
+  baseId,
+  tableIdOrName,
+  enoteca_id,
+  data,
+  attachmentFieldIdOrName,
+  pdfPath,
+  filename = undefined
+) {
+  // * 0. validate parameters
+  // token
+  if (token === undefined || token === null || token === "") {
+    logger.error("token (auth token) is required for loadWineListToAirtable", {
+      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+      token,
     });
+    throw new Error(
+      "token (auth token) is required for loadWineListToAirtable"
+    );
+  }
+  // base id
+  if (baseId === undefined || baseId === null || baseId === "") {
+    logger.error("baseId is required for loadWineListToAirtable", {
+      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+      baseId,
+    });
+    throw new Error("baseId is required for loadWineListToAirtable");
+  }
+  // table id or name
+  if (
+    tableIdOrName === undefined ||
+    tableIdOrName === null ||
+    tableIdOrName === ""
+  ) {
+    logger.error("tableIdOrName is required for loadWineListToAirtable", {
+      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+      tableIdOrName,
+    });
+    throw new Error("tableIdOrName is required for loadWineListToAirtable");
+  }
+  // enoteca_id
+  if (enoteca_id === undefined || enoteca_id === null || enoteca_id === "") {
+    logger.error("enoteca_id is required for loadWineListToAirtable", {
+      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+      enoteca_id,
+    });
+    throw new Error("enoteca_id is required for loadWineListToAirtable");
+  }
+  // data
+  if (data === undefined || data === null || data === "") {
+    logger.error("data is required for loadWineListToAirtable", {
+      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+      data,
+    });
+    throw new Error("data is required for loadWineListToAirtable");
+  }
+  // attachment field id or name
+  if (
+    attachmentFieldIdOrName === undefined ||
+    attachmentFieldIdOrName === null ||
+    attachmentFieldIdOrName === ""
+  ) {
+    logger.error(
+      "attachmentFieldIdOrName is required for loadWineListToAirtable",
+      {
+        location:
+          "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+        attachmentFieldIdOrName,
+      }
+    );
+    throw new Error(
+      "attachmentFieldIdOrName is required for loadWineListToAirtable"
+    );
+  }
+  // pdf path
+  if (pdfPath === undefined || pdfPath === null || pdfPath === "") {
+    logger.error("pdfPath is required for loadWineListToAirtable", {
+      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+      pdfPath: pdfPath,
+    });
+    throw new Error("pdfPath is required for loadWineListToAirtable");
+  }
+
+  // * 1. Prepare the date for "Carta dei Vini" field (DD-MM-YYYY format)
+  // Parse the data parameter - it can be a Date object, ISO string, or formatted string
+  let dateObj;
+  if (data instanceof Date) {
+    dateObj = data;
+  } else if (typeof data === "string") {
+    dateObj = new Date(data);
+    if (isNaN(dateObj.getTime())) {
+      throw new Error(`Invalid date format: ${data}`);
+    }
+  } else {
+    throw new Error(`Invalid data type for data parameter: ${typeof data}`);
+  }
+
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const year = dateObj.getFullYear();
+  const dateDDMMYYYY = `${day}-${month}-${year}`;
+
+  // * 2. Prepare the fields payload
+  const fields = {
+    "Carta dei Vini": `Carta dei Vini ${dateDDMMYYYY}`,
+    Enoteca: [enoteca_id], // Airtable link field expects an array of record IDs
+    Data: data instanceof Date ? data.toISOString() : data, // Use ISO 8601 format for Airtable
+    // Note: "PDF Carta dei Vini" field will be populated by the attachment upload
+  };
+
+  // * 3. Call uploadRecordWithAttachment to create the record and upload the PDF
+  // Log parameters for debugging
+  logger.info("Calling uploadRecordWithAttachment", {
+    location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+    hasToken: !!token,
+    baseId,
+    tableIdOrName,
+    fieldsKeys: Object.keys(fields),
+    attachmentFieldIdOrName,
+    pdfPath,
+  });
+
+  try {
+    const result = await uploadRecordWithAttachment({
+      token,
+      baseId,
+      tableIdOrName,
+      fields,
+      attachmentFieldIdOrName,
+      filePath: pdfPath,
+      filename,
+    });
+
+    logger.info("Wine list uploaded to Airtable successfully", {
+      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+      recordId: result.id,
+      enoteca_id: enoteca_id,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error("Error uploading wine list to Airtable", {
+      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+      error: error.message,
+      originalError: error,
+      baseId,
+      tableIdOrName,
+      enoteca_id,
+    });
+    // Preserve the original error and add context
+    const enhancedError = new Error(
+      `Error uploading wine list to Airtable: ${error.message || error.originalMessage || "Unknown error"}`
+    );
+    enhancedError.cause = error;
+    enhancedError.location = "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable";
+    enhancedError.originalLocation = error.location || error.originalLocation;
+    enhancedError.originalMessage = error.message || error.originalMessage;
+    enhancedError.baseId = baseId;
+    enhancedError.tableIdOrName = tableIdOrName;
+    enhancedError.enoteca_id = enoteca_id;
+    if (error.status) enhancedError.status = error.status;
+    if (error.statusText) enhancedError.statusText = error.statusText;
+    if (error.airtable) enhancedError.airtable = error.airtable;
+    throw enhancedError;
+  }
+}
+
+// Permetti l'invocazione diretta del file da CLI per lanciare fetchDefaultTableRecords
+if (
+  process.argv[1] === new URL(import.meta.url).pathname ||
+  process.argv[1] === new URL(import.meta.url).href.replace("file://", "")
+) {
+  fetchDefaultTableRecords().catch((err) => {
+    console.error("Errore in fetchDefaultTableRecords:", err);
+    process.exit(1);
+  });
 }
