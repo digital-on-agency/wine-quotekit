@@ -236,6 +236,22 @@ export async function writeFileAtomicSafe({
       });
     }
 
+    // Safety cleanup: ensure temporary file is removed if it still exists
+    // (shouldn't happen after successful rename, but just in case)
+    try {
+      await fs.access(tmpPath);
+      // If we reach here, the temp file still exists (rename might have failed silently)
+      logger.warn("Temporary file still exists after rename, removing it", {
+        location: "src/generation-handler.js:writeFileAtomicSafe",
+        tmpPath: tmpPath,
+        absTarget: absTarget,
+      });
+      await fs.unlink(tmpPath);
+    } catch (error) {
+      // File doesn't exist (expected after successful rename) or unlink failed
+      // This is fine, we can ignore it
+    }
+
     // Compute the written byte size
     const bytes =
       typeof data === "string"
