@@ -2,6 +2,8 @@
 // ESM - Node >= 18 (fetch nativo)
 
 import dotenv from "dotenv";
+import fs from "node:fs/promises";
+import path from "node:path";
 import { logger } from "../../../lib/logger/index.js";
 
 dotenv.config();
@@ -9,6 +11,40 @@ dotenv.config();
 const AIRTABLE_API_BASE = process.env.AIRTABLE_API_BASE;
 if (!AIRTABLE_API_BASE) {
   throw new Error("AIRTABLE_API_BASE is not defined");
+}
+
+const AIRTABLE_CONTENT_BASE =
+  process.env.AIRTABLE_CONTENT_BASE || "https://api.airtable.com/v0";
+
+/**
+ * Guesses the MIME content type from a filename based on its extension.
+ *
+ * @param {string} filename - The filename to analyze
+ * @returns {string} - The guessed MIME type, defaults to "application/octet-stream"
+ */
+function guessContentTypeFromFilename(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  const mimeTypes = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+    ".txt": "text/plain",
+    ".csv": "text/csv",
+    ".json": "application/json",
+    ".xml": "application/xml",
+    ".zip": "application/zip",
+    ".doc": "application/msword",
+    ".docx":
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel",
+    ".xlsx":
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  };
+  return mimeTypes[ext] || "application/octet-stream";
 }
 
 /**
@@ -68,31 +104,31 @@ function buildUrl(path, query) {
  * optional JSON request bodies.
  *
  * @param {Object} params
- * @param {"GET" | "POST" | "PATCH" | "PUT" | "DELETE"} params.method  
+ * @param {"GET" | "POST" | "PATCH" | "PUT" | "DELETE"} params.method
  * The HTTP method to use for the Airtable request.
  *
- * @param {string} params.token  
+ * @param {string} params.token
  * The Airtable Personal Access Token (PAT) used for authentication.
  *
- * @param {string} params.path  
+ * @param {string} params.path
  * The Airtable API path (e.g. `"/appXXXXXXXX/TableName"` or
  * `"/appXXXXXXXX/TableName/recYYYYYYYY"`).
  *
- * @param {Record<string, any>} [params.query]  
+ * @param {Record<string, any>} [params.query]
  * Optional query parameters appended to the request URL.
  * Supports arrays for repeated parameters (handled by `buildUrl`).
  *
- * @param {object} [params.body]  
+ * @param {object} [params.body]
  * Optional request body. When provided, it is JSON-stringified and
  * sent with the appropriate `Content-Type` header.
  *
- * @returns {Promise<any>}  
+ * @returns {Promise<any>}
  * A promise that resolves to the parsed JSON response returned by Airtable.
  *
- * @throws {Error}  
+ * @throws {Error}
  * Throws a rich error object when:
  * - the API token or path is missing
- * - the HTTP response status is not OK  
+ * - the HTTP response status is not OK
  *
  * The thrown error is enriched with:
  * - `status` (HTTP status code)
@@ -166,22 +202,22 @@ async function airtableRequest({ method, token, path, query, body }) {
  * parameters and builds the correct Airtable API path.
  *
  * @param {Object} params
- * @param {string} params.token  
+ * @param {string} params.token
  * The Airtable Personal Access Token (PAT) used for authentication.
  *
- * @param {string} params.baseId  
+ * @param {string} params.baseId
  * The Airtable Base ID containing the target table.
  *
- * @param {string} params.tableIdOrName  
+ * @param {string} params.tableIdOrName
  * The table ID or human-readable table name.
  *
- * @param {string} params.recordId  
+ * @param {string} params.recordId
  * The unique Airtable record ID to fetch.
  *
- * @returns {Promise<any>}  
+ * @returns {Promise<any>}
  * A promise that resolves to the raw Airtable record object returned by the API.
  *
- * @throws {Error}  
+ * @throws {Error}
  * Throws an error if:
  * - `baseId`, `tableIdOrName`, or `recordId` are missing
  * - the underlying Airtable request fails
@@ -221,27 +257,27 @@ export async function getRecord({ token, baseId, tableIdOrName, recordId }) {
  * (filters, views, pagination, etc.).
  *
  * @param {Object} params
- * @param {string} params.token  
+ * @param {string} params.token
  * The Airtable Personal Access Token (PAT) used for authentication.
  *
- * @param {string} params.baseId  
+ * @param {string} params.baseId
  * The Airtable Base ID containing the target table.
  *
- * @param {string} params.tableIdOrName  
+ * @param {string} params.tableIdOrName
  * The table ID or human-readable table name.
  *
- * @param {Record<string, any>} [params.params={}]  
+ * @param {Record<string, any>} [params.params={}]
  * Optional Airtable query parameters, such as:
  * - `filterByFormula`
  * - `view`
  * - `pageSize`
  * - `offset`
  *
- * @returns {Promise<any>}  
+ * @returns {Promise<any>}
  * A promise that resolves to the Airtable API response containing
  * an array of records and pagination metadata (if present).
  *
- * @throws {Error}  
+ * @throws {Error}
  * Throws an error if:
  * - `baseId` or `tableIdOrName` is missing
  * - the underlying Airtable request fails
@@ -295,33 +331,33 @@ export async function listRecords({
  * - Each record must follow the `{ fields: { ... } }` structure.
  *
  * @param {Object} params
- * @param {string} params.token  
+ * @param {string} params.token
  * The Airtable Personal Access Token (PAT) used for authentication.
  *
- * @param {string} params.baseId  
+ * @param {string} params.baseId
  * The Airtable Base ID where the records will be created.
  *
- * @param {string} params.tableIdOrName  
+ * @param {string} params.tableIdOrName
  * The table ID or human-readable table name.
  *
- * @param {Array<{ fields: Record<string, any> }>} params.records  
- * An array of record objects to create.  
+ * @param {Array<{ fields: Record<string, any> }>} params.records
+ * An array of record objects to create.
  * Each entry **must** contain a `fields` object matching the Airtable schema.
  * Maximum length: 10 records.
  *
- * @param {boolean} [params.typecast=false]  
+ * @param {boolean} [params.typecast=false]
  * When `true`, Airtable will attempt to coerce field values into compatible
  * types (e.g. strings to select options).
  *
- * @param {boolean} [params.returnFieldsByFieldId=false]  
+ * @param {boolean} [params.returnFieldsByFieldId=false]
  * When `true`, the response will return field values keyed by field ID
  * instead of field name.
  *
- * @returns {Promise<any>}  
+ * @returns {Promise<any>}
  * A promise that resolves to the Airtable API response containing the
  * newly created records.
  *
- * @throws {Error}  
+ * @throws {Error}
  * Throws an error if:
  * - `baseId` or `tableIdOrName` is missing
  * - `records` is not a non-empty array
@@ -394,30 +430,30 @@ export async function createRecords({
  * the batch API and returning only the newly created record.
  *
  * @param {Object} params
- * @param {string} params.token  
+ * @param {string} params.token
  * The Airtable Personal Access Token (PAT) used for authentication.
  *
- * @param {string} params.baseId  
+ * @param {string} params.baseId
  * The Airtable Base ID where the record will be created.
  *
- * @param {string} params.tableIdOrName  
+ * @param {string} params.tableIdOrName
  * The table ID or human-readable table name.
  *
- * @param {Record<string, any>} params.fields  
+ * @param {Record<string, any>} params.fields
  * An object containing the field values for the new record.
  *
- * @param {boolean} [params.typecast=false]  
+ * @param {boolean} [params.typecast=false]
  * When `true`, Airtable will attempt to coerce field values into compatible
  * types (e.g. strings to select options).
  *
- * @param {boolean} [params.returnFieldsByFieldId=false]  
+ * @param {boolean} [params.returnFieldsByFieldId=false]
  * When `true`, the response will return field values keyed by field ID
  * instead of field name.
  *
- * @returns {Promise<any>}  
+ * @returns {Promise<any>}
  * A promise that resolves to the newly created Airtable record.
  *
- * @throws {Error}  
+ * @throws {Error}
  * Throws an error if:
  * - `fields` is missing or not an object
  * - the underlying Airtable request fails
@@ -474,23 +510,23 @@ export async function createRecord({
  * required parameters and issues a DELETE request to the Airtable API.
  *
  * @param {Object} params
- * @param {string} params.token  
+ * @param {string} params.token
  * The Airtable Personal Access Token (PAT) used for authentication.
  *
- * @param {string} params.baseId  
+ * @param {string} params.baseId
  * The Airtable Base ID containing the target table.
  *
- * @param {string} params.tableIdOrName  
+ * @param {string} params.tableIdOrName
  * The table ID or human-readable table name.
  *
- * @param {string} params.recordId  
+ * @param {string} params.recordId
  * The unique Airtable record ID to delete.
  *
- * @returns {Promise<any>}  
+ * @returns {Promise<any>}
  * A promise that resolves to the Airtable API response confirming deletion
  * of the record.
  *
- * @throws {Error}  
+ * @throws {Error}
  * Throws an error if:
  * - `baseId`, `tableIdOrName`, or `recordId` is missing
  * - the underlying Airtable request fails
@@ -510,7 +546,12 @@ export async function createRecord({
  * - No confirmation or soft-delete mechanism is implemented.
  * - Intended for use in controlled backend or automation contexts.
  */
-export async function deleteRecord({ token, baseId, tableIdOrName, recordId }) {
+export async function deleteRecord({
+  token = AIRTABLE_AUTH_TOKEN,
+  baseId,
+  tableIdOrName,
+  recordId,
+}) {
   if (!baseId) throw new Error("baseId is required");
   if (!tableIdOrName) throw new Error("tableIdOrName is required");
   if (!recordId) throw new Error("recordId is required");
@@ -520,4 +561,403 @@ export async function deleteRecord({ token, baseId, tableIdOrName, recordId }) {
     token,
     path: `/${baseId}/${tableIdOrName}/${recordId}`,
   });
+}
+
+export async function findRecordIdByEqualField({
+  token,
+  baseId,
+  tableIdOrName,
+  fieldName,
+  value,
+  view = undefined,
+}) {
+  // * 0. validate parameters
+  // field name
+  if (fieldName === undefined || fieldName === null || fieldName === "") {
+    logger.error("fieldName is required for findRecordIdByEqualField", {
+      location: "src/lib/api/airtable/airtableApi.js:findRecordIdByEqualField",
+      fieldName: fieldName,
+    });
+    throw new Error("fieldName is required for findRecordIdByEqualField");
+  }
+  // value
+  if (value === undefined || value === null || value === "") {
+    logger.error("value is required for findRecordIdByEqualField", {
+      location: "src/lib/api/airtable/airtableApi.js:findRecordIdByEqualField",
+      value: value,
+    });
+    throw new Error("value is required for findRecordIdByEqualField");
+  }
+  // base id
+  if (baseId === undefined || baseId === null || baseId === "") {
+    logger.error("baseId is required for findRecordIdByEqualField", {
+      location: "src/lib/api/airtable/airtableApi.js:findRecordIdByEqualField",
+      baseId: baseId,
+    });
+    throw new Error("baseId is required for findRecordIdByEqualField");
+  }
+  // table id or name
+  if (
+    tableIdOrName === undefined ||
+    tableIdOrName === null ||
+    tableIdOrName === ""
+  ) {
+    logger.error("tableIdOrName is required for findRecordIdByEqualField", {
+      location: "src/lib/api/airtable/airtableApi.js:findRecordIdByEqualField",
+      tableIdOrName: tableIdOrName,
+    });
+    throw new Error("tableIdOrName is required for findRecordIdByEqualField");
+  }
+  // token
+  if (token === undefined || token === null || token === "") {
+    logger.error("token is required for findRecordIdByEqualField", {
+      location: "src/lib/api/airtable/airtableApi.js:findRecordIdByEqualField",
+      token: token,
+    });
+    throw new Error("token is required for findRecordIdByEqualField");
+  }
+
+  // * 1. build the filter formula
+  const filterFormula = `{${fieldName}} = "${value}"`;
+
+  // * 2. fetch the record
+  const result = await listRecords({
+    token,
+    baseId,
+    tableIdOrName,
+    params: { filterByFormula },
+  });
+
+  if (result.records.length === 0) {
+    logger.info("No record found for findRecordIdByEqualField", {
+      location: "src/lib/api/airtable/airtableApi.js:findRecordIdByEqualField",
+      fieldName: fieldName,
+      value: value,
+      baseId: baseId,
+      tableIdOrName: tableIdOrName,
+      token: token,
+    });
+    return null;
+  } else if (result.records.length === 1) {
+    logger.info("Record found for findRecordIdByEqualField", {
+      location: "src/lib/api/airtable/airtableApi.js:findRecordIdByEqualField",
+      fieldName: fieldName,
+      value: value,
+      baseId: baseId,
+      tableIdOrName: tableIdOrName,
+      token: token,
+    });
+    return result.record[0].id;
+  } else {
+    logger.info("Multiple records found for findRecordIdByEqualField", {
+      location: "src/lib/api/airtable/airtableApi.js:findRecordIdByEqualField",
+      fieldName: fieldName,
+      value: value,
+      baseId: baseId,
+      tableIdOrName: tableIdOrName,
+      token: token,
+      records: result.records,
+    });
+    return {
+      size: result.record.length,
+      records: result.records,
+    };
+  }
+}
+
+/**
+ * Creates a new record in an Airtable table and uploads an attachment file to a specified field.
+ * This function combines record creation with file attachment in a single operation.
+ *
+ * @param {Object} params
+ * @param {string} params.token
+ * The Airtable Personal Access Token (PAT) used for authentication.
+ *
+ * @param {string} params.baseId
+ * The Airtable Base ID where the record will be created.
+ *
+ * @param {string} params.tableIdOrName
+ * The table ID or human-readable table name.
+ *
+ * @param {Record<string, any>} params.fields
+ * An object containing the field values for the new record.
+ * Note: The attachment field should NOT be included in this object,
+ * as it will be populated by the file upload.
+ *
+ * @param {string} params.attachmentFieldIdOrName
+ * The field ID or name of the attachment field where the file will be uploaded.
+ *
+ * @param {string} params.filePath
+ * The local file system path to the file to upload.
+ *
+ * @param {string} [params.filename]
+ * Optional custom filename. If not provided, the basename of filePath will be used.
+ *
+ * @param {string} [params.contentType]
+ * Optional MIME content type. If not provided, it will be guessed from the file extension.
+ *
+ * @param {boolean} [params.typecast=false]
+ * When `true`, Airtable will attempt to coerce field values into compatible types.
+ *
+ * @param {boolean} [params.returnFieldsByFieldId=false]
+ * When `true`, the response will return field values keyed by field ID instead of field name.
+ *
+ * @returns {Promise<any>}
+ * A promise that resolves to the newly created Airtable record with the attachment uploaded.
+ *
+ * @throws {Error}
+ * Throws an error if:
+ * - required parameters are missing
+ * - the file cannot be read or is too large (>5MB)
+ * - record creation fails
+ * - attachment upload fails
+ *
+ * @usage
+ * ```ts
+ * const record = await uploadRecordWithAttachment({
+ *   token: process.env.AIRTABLE_API_KEY,
+ *   baseId: "appXXXXXXXXXXXXXX",
+ *   tableIdOrName: "Documents",
+ *   fields: {
+ *     Name: "My Document",
+ *     Description: "A document with an attachment",
+ *   },
+ *   attachmentFieldIdOrName: "File",
+ *   filePath: "/path/to/document.pdf",
+ *   filename: "custom-name.pdf",
+ * });
+ *
+ * console.log(record.id);
+ * ```
+ *
+ * @notes
+ * - Maximum file size is 5 MB (Airtable limitation).
+ * - The record is created first, then the attachment is uploaded to it.
+ * - If record creation succeeds but attachment upload fails, the record will still exist in Airtable.
+ */
+export async function uploadRecordWithAttachment({
+  token,
+  baseId,
+  tableIdOrName,
+  fields,
+  attachmentFieldIdOrName,
+  filePath,
+  filename = undefined,
+  contentType = undefined,
+  typecast = false,
+  returnFieldsByFieldId = false,
+}) {
+  // * 0. Parameter validation
+  // token
+  if (token === undefined || token === null || token === "") {
+    logger.error("token is required for uploadRecordWithAttachment", {
+      location:
+        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      token: token,
+    });
+    throw new Error("token is required for uploadRecordWithAttachment");
+  }
+  // base id
+  if (baseId === undefined || baseId === null || baseId === "") {
+    logger.error("baseId is required for uploadRecordWithAttachment", {
+      location:
+        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      baseId: baseId,
+    });
+    throw new Error("baseId is required for uploadRecordWithAttachment");
+  }
+  // table id or name
+  if (
+    tableIdOrName === undefined ||
+    tableIdOrName === null ||
+    tableIdOrName === ""
+  ) {
+    logger.error("tableIdOrName is required for uploadRecordWithAttachment", {
+      location:
+        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      tableIdOrName: tableIdOrName,
+    });
+    throw new Error("tableIdOrName is required for uploadRecordWithAttachment");
+  }
+  // fields
+  if (fields === undefined || fields === null || typeof fields !== "object") {
+    logger.error("fields is required for uploadRecordWithAttachment", {
+      location:
+        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      fields: fields,
+    });
+    throw new Error("fields is required for uploadRecordWithAttachment");
+  }
+  // attachment field id or name
+  if (
+    attachmentFieldIdOrName === undefined ||
+    attachmentFieldIdOrName === null ||
+    attachmentFieldIdOrName === ""
+  ) {
+    logger.error(
+      "attachmentFieldIdOrName is required for uploadRecordWithAttachment",
+      {
+        location:
+          "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+        attachmentFieldIdOrName: attachmentFieldIdOrName,
+      }
+    );
+    throw new Error(
+      "attachmentFieldIdOrName is required for uploadRecordWithAttachment"
+    );
+  }
+  // file path
+  if (filePath === undefined || filePath === null || filePath === "") {
+    logger.error("filePath is required for uploadRecordWithAttachment", {
+      location:
+        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      filePath: filePath,
+    });
+    throw new Error("filePath is required for uploadRecordWithAttachment");
+  }
+
+  // * 1. Read the file from the filesystem
+  const fileBuf = await fs.readFile(filePath);
+
+  // File size in bytes
+  const sizeBytes = fileBuf.byteLength;
+
+  // Maximum allowed size for the uploadAttachment endpoint
+  const MAX = 5 * 1024 * 1024; // 5 MB
+
+  if (sizeBytes > MAX) {
+    throw new Error(
+      `File too large for uploadAttachment endpoint: ${sizeBytes} bytes. Max is ${MAX} bytes (5 MB).`
+    );
+  }
+
+  // Final filename:
+  // - use provided filename, or
+  // - fallback to basename of the path
+  const finalFilename = filename || path.basename(filePath);
+
+  // Final MIME type:
+  // - use provided contentType, or
+  // - guess from file extension
+  const finalContentType =
+    contentType || guessContentTypeFromFilename(finalFilename);
+
+  // * 2. Create the record first (without the attachment field)
+  let newRecord;
+  try {
+    newRecord = await createRecord({
+      token,
+      baseId,
+      tableIdOrName,
+      fields,
+      typecast,
+      returnFieldsByFieldId,
+    });
+  } catch (error) {
+    logger.error("Error creating record for uploadRecordWithAttachment", {
+      location:
+        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      error: error.message,
+      baseId,
+      tableIdOrName,
+      originalError: error,
+    });
+    // Preserve the original error and add context
+    const enhancedError = new Error(
+      `Error creating record for uploadRecordWithAttachment: ${error.message}`
+    );
+    enhancedError.cause = error;
+    enhancedError.location = "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment";
+    enhancedError.baseId = baseId;
+    enhancedError.tableIdOrName = tableIdOrName;
+    enhancedError.originalMessage = error.message;
+    if (error.status) enhancedError.status = error.status;
+    if (error.statusText) enhancedError.statusText = error.statusText;
+    if (error.airtable) enhancedError.airtable = error.airtable;
+    throw enhancedError;
+  }
+
+  // Extract the record ID from the created record
+  const recordId = newRecord.id;
+  if (!recordId) {
+    throw new Error("Failed to create record: no record ID returned");
+  }
+
+  // * 3. Convert file to Base64 (required by Airtable)
+  const fileBase64 = fileBuf.toString("base64");
+
+  // * 4. Build the upload endpoint URL
+  const url = `${AIRTABLE_CONTENT_BASE}/${baseId}/${recordId}/${encodeURIComponent(
+    attachmentFieldIdOrName
+  )}/uploadAttachment`;
+
+  // * 5. HTTP POST to Airtable to upload the attachment
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contentType: finalContentType,
+        file: fileBase64,
+        filename: finalFilename,
+      }),
+    });
+  } catch (error) {
+    logger.error("Error uploading attachment for uploadRecordWithAttachment", {
+      location:
+        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      error: error.message,
+      recordId,
+      attachmentFieldIdOrName,
+      originalError: error,
+    });
+    // Preserve the original error and add context
+    const enhancedError = new Error(
+      `Error uploading attachment for uploadRecordWithAttachment: ${error.message}`
+    );
+    enhancedError.cause = error;
+    enhancedError.location = "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment";
+    enhancedError.recordId = recordId;
+    enhancedError.attachmentFieldIdOrName = attachmentFieldIdOrName;
+    enhancedError.originalMessage = error.message;
+    if (error.status) enhancedError.status = error.status;
+    if (error.statusText) enhancedError.statusText = error.statusText;
+    if (error.airtable) enhancedError.airtable = error.airtable;
+    throw enhancedError;
+  }
+
+  // Airtable always returns text (either JSON or error)
+  const text = await res.text();
+  let json = null;
+
+  // Attempt to parse JSON
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      // Fallback if response is not valid JSON
+      json = { raw: text };
+    }
+  }
+
+  // If response is not OK → throw structured error
+  if (!res.ok) {
+    const msg =
+      json?.error?.message ||
+      json?.message ||
+      `Airtable uploadAttachment failed (${res.status} ${res.statusText})`;
+
+    const err = new Error(msg);
+    err.status = res.status;
+    err.statusText = res.statusText;
+    err.airtable = json;
+    err.url = url;
+    throw err;
+  }
+
+  // * 6. Return the Airtable response (record with attachment)
+  return json;
 }
