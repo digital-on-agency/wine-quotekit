@@ -39,6 +39,9 @@ const MENU_DATA_DIR = path.join(PROJECT_ROOT, "data", "menu");
 // Output directory for PDF files
 const PDF_OUTPUT_DIR = path.join(PROJECT_ROOT, "out");
 
+// Attachment field ID for "PDF Carta dei Vini"
+const PDF_ATTACHMENT_FIELD_ID = process.env.AIRTABLE_PDF_FIELD_ID;
+
 // # -------------------------- FUNCTIONS --------------------------
 
 /** Writes data to disk using an atomic, path-traversal-safe strategy.
@@ -405,6 +408,17 @@ export default async function startGeneration({
     // throw new Error("PARAM_ERROR: out record id is required");
   }
 
+  // Log the parameters validation success
+  logger.info("1. Starting generation: parameters validation - Success", {
+    location: "src/generation-handler.js:startGeneration",
+    enoteca: enoteca,
+    access_token: access_token,
+    base_id: base_id,
+    table_id: table_id,
+    out_tab_id: out_tab_id,
+    out_record_id: out_record_id,
+  });
+
   // # 1. Trova il record ID dell'enoteca
 
   let enotecaRecordId = null;
@@ -449,6 +463,12 @@ export default async function startGeneration({
       });
     }
   }
+
+  // Log the enoteca record ID found
+  logger.info("2. Enoteca record ID found", {
+    location: "src/generation-handler.js:startGeneration",
+    enotecaRecordId: enotecaRecordId,
+  });
 
   // # 2. Costruisci il filterByFormula con le condizioni
   // Nota: in Airtable un checkbox può essere testato anche come boolean diretto: `{Campo}`
@@ -502,6 +522,12 @@ export default async function startGeneration({
     });
   }
 
+  // Log the data fetched successfully
+  logger.info("3. Data fetched successfully", {
+    location: "src/generation-handler.js:startGeneration",
+    data_number: data.length,
+  });
+
   // # 4. build payload with middleware (handlebars)
   // get enoteca data (name, logo_url, qr_image_url, digital_menu_url)
   const rawEnotecaData = await getEnotecaData(enotecaRecordId, {
@@ -539,7 +565,7 @@ export default async function startGeneration({
   });
 
   // Log the YAML file saved
-  logger.info("YAML file saved", {
+  logger.info("4. YAML file saved", {
     location: "src/generation-handler.js:startGeneration",
     absPath: absPath,
     bytes: bytes,
@@ -548,13 +574,16 @@ export default async function startGeneration({
 
   // # 5. generate and save the document
   // Generate PDF document from YAML file
+  let pdfPath;
   try {
-    await build(absPath, { outputDir: PDF_OUTPUT_DIR });
+    // build() now returns the PDF path
+    pdfPath = await build(absPath, { outputDir: PDF_OUTPUT_DIR });
 
     // Log the PDF generation completed successfully
-    logger.info("PDF generation completed successfully", {
+    logger.info("5. PDF generation completed successfully", {
       location: "src/generation-handler.js:startGeneration",
       yamlPath: absPath,
+      pdfPath: pdfPath,
     });
   } catch (error) {
     logger.error("Error generating PDF", {
@@ -607,14 +636,14 @@ export default async function startGeneration({
     }
 
     // Log parameters before calling loadWineListToAirtable for debugging
-    logger.info("Calling loadWineListToAirtable with parameters", {
+    logger.info(" ####DEBUG#### Calling loadWineListToAirtable with parameters", {
       location: "src/generation-handler.js:startGeneration",
       hasAccessToken: !!access_token,
       base_id,
       wine_list_tab_id,
       enotecaRecordId,
       dateString,
-      pdfPath: absPath,
+      pdfPath: pdfPath,
     });
 
     const result = await loadWineListToAirtable(
@@ -623,10 +652,11 @@ export default async function startGeneration({
       wine_list_tab_id,
       enotecaRecordId,
       dateObj, // Pass Date object instead of string
-      "PDF Carta dei Vini",
-      absPath
+      PDF_ATTACHMENT_FIELD_ID, // Field ID for "PDF Carta dei Vini"
+      pdfPath // Pass PDF path instead of YAML path
     );
-    logger.info("Document saved to Airtable successfully", {
+
+    logger.info("6. Document saved to Airtable successfully", {
       location: "src/generation-handler.js:startGeneration",
       result: result,
     });

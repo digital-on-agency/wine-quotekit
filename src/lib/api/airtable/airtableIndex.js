@@ -246,23 +246,6 @@ export async function findEnotecaRecordId(
     }
 
     return;
-
-    if (result.records && result.records.length > 0) {
-      const recordId = result.records[0].id;
-      logger.info("Enoteca record ID found", {
-        location: "src/lib/api/airtable/airtableIndex.js:findEnotecaRecordId",
-        enotecaName,
-        recordId,
-      });
-      return recordId;
-    }
-
-    logger.warning("Enoteca not found", {
-      location: "src/lib/api/airtable/airtableIndex.js:findEnotecaRecordId",
-      enotecaName,
-      nameField,
-    });
-    return null;
   } catch (error) {
     logger.error("Error finding enoteca record ID", {
       location: "src/lib/api/airtable/airtableIndex.js:findEnotecaRecordId",
@@ -545,6 +528,16 @@ export async function loadWineListToAirtable(
     throw new Error("pdfPath is required for loadWineListToAirtable");
   }
 
+  // TODO: remove after testing
+  logger.info(" ####DEBUG#### loadWineListToAirtable parameters validation - Success", {
+    location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+    token,
+    baseId,
+    tableIdOrName,
+    enoteca_id,
+    data,
+  });
+
   // * 1. Prepare the date for "Carta dei Vini" field (DD-MM-YYYY format)
   // Parse the data parameter - it can be a Date object, ISO string, or formatted string
   let dateObj;
@@ -564,25 +557,31 @@ export async function loadWineListToAirtable(
   const year = dateObj.getFullYear();
   const dateDDMMYYYY = `${day}-${month}-${year}`;
 
+  // TODO: remove after testing
+  logger.info(" ####DEBUG#### dateDDMMYYYY", {
+    location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+    dateDDMMYYYY,
+  });
+
   // * 2. Prepare the fields payload
+  // Format date for Airtable: use ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ), Airtable accepts ISO 8601 strings for date fields
+  const airtableDate = data instanceof Date ? data.toISOString() : new Date(data).toISOString();
+  
+  // Note: "Carta dei Vini" is a computed/linked field that cannot be set directly, it will be populated automatically by Airtable based on the linked record
   const fields = {
-    "Carta dei Vini": `Carta dei Vini ${dateDDMMYYYY}`,
     Enoteca: [enoteca_id], // Airtable link field expects an array of record IDs
-    Data: data instanceof Date ? data.toISOString() : data, // Use ISO 8601 format for Airtable
+    Data: airtableDate, // Use ISO 8601 format for Airtable date field
     // Note: "PDF Carta dei Vini" field will be populated by the attachment upload
+    // Note: "Carta dei Vini" is a computed field and should not be included here
   };
 
-  // * 3. Call uploadRecordWithAttachment to create the record and upload the PDF
-  // Log parameters for debugging
-  logger.info("Calling uploadRecordWithAttachment", {
+  // TODO: remove after testing
+  logger.info(" ####DEBUG#### fields || Enter uploadRecordWithAttachment", {
     location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
-    hasToken: !!token,
-    baseId,
-    tableIdOrName,
-    fieldsKeys: Object.keys(fields),
-    attachmentFieldIdOrName,
-    pdfPath,
+    fields: JSON.stringify(fields, null, 2),
   });
+
+  // * 3. Call uploadRecordWithAttachment to create the record and upload the PDF
 
   try {
     const result = await uploadRecordWithAttachment({
@@ -595,22 +594,14 @@ export async function loadWineListToAirtable(
       filename,
     });
 
-    logger.info("Wine list uploaded to Airtable successfully", {
+    // TODO: remove after testing
+    logger.info(" ####DEBUG#### result", {
       location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
-      recordId: result.id,
-      enoteca_id: enoteca_id,
+      result: JSON.stringify(result, null, 2),
     });
 
     return result;
   } catch (error) {
-    logger.error("Error uploading wine list to Airtable", {
-      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
-      error: error.message,
-      originalError: error,
-      baseId,
-      tableIdOrName,
-      enoteca_id,
-    });
     // Preserve the original error and add context
     const enhancedError = new Error(
       `Error uploading wine list to Airtable: ${error.message || error.originalMessage || "Unknown error"}`

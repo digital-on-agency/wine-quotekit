@@ -738,8 +738,6 @@ export function metaDataYamlBuilder(enoteca, simple_categories) {
     note: "Disponibilità dei vini soggetta a variazioni.",
   }));
 
-  console.log("------------enoteca", enoteca);
-
   const metaData = {
     meta: {
       id: `${tod}-${enoteca.id}`,
@@ -953,13 +951,7 @@ export default async function generateWineListYamlString(data, enoteca) {
   const metaDataYamlString = metaDataYamlBuilder(enoteca, categories);
   const winesYamlString = wineDataYamlBuilder(validRecords);
 
-  console.log("------------metaDataYamlString", typeof metaDataYamlString);
-  console.log("------------winesYamlString", typeof winesYamlString);
-  // console.log("------------metaDataYamlString", metaDataYamlString);
-  // console.log("------------winesYamlString", winesYamlString);
   const fullYamlString = `${metaDataYamlString}\n\n${winesYamlString}`;
-
-  // console.log("------------fullYamlString", fullYamlString);
 
   return fullYamlString;
 }

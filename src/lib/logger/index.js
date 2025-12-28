@@ -1,6 +1,7 @@
 import pino from "pino";
 import fs from "fs";
 import path from "path";
+import { Transform } from "stream";
 
 // Directory where log files will be written (relative to project root when run from npm scripts)
 const LOG_DIR = path.resolve(process.cwd(), "logs");
@@ -45,9 +46,22 @@ const fileDestination = pino.destination({
   sync: true,
 });
 
+// Create a Transform stream that adds a newline after each log entry for stdout
+const stdoutWithNewline = new Transform({
+  transform(chunk, encoding, callback) {
+    // Add a newline after each chunk (log entry)
+    this.push(chunk);
+    this.push("\n");
+    callback();
+  },
+});
+
+// Pipe the transform stream to stdout
+stdoutWithNewline.pipe(process.stdout);
+
 // Configure multistream to tee logs to both console (stdout) and file.
 const streams = pino.multistream([
-  { stream: process.stdout, level: "info" }, // console
+  { stream: stdoutWithNewline, level: "info" }, // console with newline
   { stream: fileDestination, level: "info" }, // daily file
 ]);
 

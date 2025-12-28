@@ -1,0 +1,1227 @@
+meta:
+  id: 2025-12-28-porgi-l'altra-pancia
+  date: '2025-12-28'
+  ref: 2025-12-28-porgi-l'altra-pancia
+main_cover:
+  title: CARTA DEI VINI
+  venue_name: Porgi l'Altra Pancia
+  description: Una selezione curata con passione, dai grandi classici ai piccoli produttori artigianali.
+  logo_image: https://v5.airtableusercontent.com/v3/u/48/48/1766959200000/-ZdrJGlRbD_FL24N8ydPGA/nW_70bu85ToWsSnNT2Co1F-t6F-jTbAk3nVWEIWcIIr9_SSwobk7ggWmeWRWhXGFJi1LzdJxdo1MkhrVOYi8VyCLwM74Vk99w10qbJ38Sk05-uKhB3jAhkGO8rLrdsvPqbi05GGHRUhDoCYKbyJRECo4tm3_qmJqvSntJJ9bxsg/SyD9_ImfHY2fVpKawf_KOC2_OIz_fzqtdtNzvLno8ac
+  logo_alt: Logo della Porgi l'Altra Pancia
+  qr_image: https://v5.airtableusercontent.com/v3/u/48/48/1766959200000/7-OmtIPVnN9fxBh2bcaQlA/IjL4Kq2mW3viF8IwKbnVT9Rqrg6EHaw6oxJS7gvb-aEXWT8z8gFWo9CaHs7FJ-Ai2yz_qvP93ssDkNXBNeJvshScWmkh7bj2_RQ_ApbODqnyQkw4ESNXlGC2KwEDfuRwRvV1TIhDTZm4OUdwVUpye2dpmOnth9lv8k3q0M9b2ZM8ismMBbBkH0sE43nBp-aA/Sf4Omgv9PAKcZLsRGmwdx_ZP8bUd-zxxqqxTnB1V60o
+  qr_alt: 'QR code per consultare la carta dei vini completa. URL: https://google.com'
+  qr_caption: Scansiona il QR per visualizzare il menù completo e gli abbinamenti consigliati.
+  footer_note: Lista aggiornata al 2025-12-28.
+categories: []
+
+
+wines:
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: 'L''Airone Vermentino  IGT '
+        producer: Guado al Melo
+        grapes: 'Vermentino Nota: Può contenere tracce di altre varietà.'
+        production_location: Castagneto Carducci (LI)
+        aging: 'Affinamento: in acciaio per preservare freschezza e aromaticità.'
+        price_eur: 10
+        abv: 12.5%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: 'Vermentino  - Bolgheri DOC '
+        producer: Guado al Tasso
+        grapes: 'Vermentino. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: fermenta e affina in acciaio a temperatura controllata.'
+        price_eur: 10
+        abv: 12.5-13%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: 'Vermentino Grattamacco - Bolgheri DOC '
+        producer: Grattamacco
+        grapes: 'Vermentino, Sauvignon Blanc, Viognier. Nota: Può contenere tracce di altre varietà.'
+        production_location: Castagneto Carducci (LI)
+        aging: 'Affinamento: 8 mesi, metà in barrique e metà in acciaio inox.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: 'Vermentino - Bolgheri DOC '
+        producer: Donna Olimpia
+        grapes: 'Vermentino, Viognier, Petit Manseng. Nota: Può contenere tracce di altre varietà.'
+        production_location: Castagneto Carducci (LI)
+        aging: 'Affinamento: in barriques di rovere francese con un lungo affinamento sui lieviti per struttura e cremosità.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: 'Vermentino  DOC '
+        producer: Tenuta Guado al Tasso
+        grapes: 'Vermentino Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: in acciaio inox per preservare freschezza e aromi fruttati.'
+        price_eur: 10
+        abv: 13%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: Greve in Chianti
+    items:
+      - name: 'Batar  IGT '
+        producer: Querciabella
+        grapes: '50% Chardonnay, 50% Pinot Bianco. Nota: Può contenere tracce di altre varietà.'
+        production_location: Greve in Chianti (FI)
+        aging: 'Affinamento: fermentazione e affinamento per 9 mesi in barrique di rovere francese, seguito da un ulteriore affinamento in bottiglia.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Il Marzocco  IGT '
+        producer: Avignonesi
+        grapes: 100% Chardonnay
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: 5-6 mesi in barrique e cemento.'
+        price_eur: 10
+        abv: 13%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: Riparbella
+    items:
+      - name: 'Oro di Caiarossa  IGT '
+        producer: Caiarossa
+        grapes: '100% Petit Manseng. Nota: Può contenere tracce di altre varietà.'
+        production_location: Riparbella (PI)
+        aging: 'Affinamento: in barriques per circa 10 mesi, seguito da un affinamento in bottiglia.'
+        price_eur: 10
+        abv: 12,5%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: San Gimignano
+    items:
+      - name: 'Terre dei tufi - Bianco di Toscana IGT '
+        producer: Teruzzi
+        grapes: 'Vernaccia, Chardonnay, Sauvignon Blanc, Trebbiano. Nota: Può contenere tracce di altre varietà.'
+        production_location: San Gimignano (SI)
+        aging: 'Affinamento: 8-9 mesi in parte in acciaio e in parte in tonneaux di rovere.'
+        price_eur: 10
+        abv: 12.5%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: 'Val di Cornia '
+    items:
+      - name: 'Bauci Viognier  IGT '
+        producer: La Fralluca
+        grapes: 100% Viognier
+        production_location: Suvereto (LI)
+        aging: 'Affinamento: 9 mesi, metà in acciaio e metà in tonneaux di rovere francese di secondo passaggio, seguito da affinamento in bottiglia per 10 mesi.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Bianchi
+    region:
+      - Toscana
+    zone: 'Val di Cornia '
+    items:
+      - name: 'Filemone  IGT '
+        producer: La Fralluca
+        grapes: '100% Vermentino. Nota: Può contenere tracce di altre varietà.'
+        production_location: Suvereto (LI)
+        aging: 'Affinamento: fermentazione in piccole botti di rovere francesi, fermentazione malolattica e affinamento sui lieviti per 10 mesi.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rosati
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Trerosé  IGT '
+        producer: Tenuta Trerose
+        grapes: 'Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: breve affinamento in acciaio per preservare freschezza e naturalità del frutto.'
+        price_eur: 10
+        abv: 12,5%
+  - category:
+      - Vini Rosati
+    region:
+      - Toscana
+    zone: Monteregio di Massa Marittima
+    items:
+      - name: 'Rosamatri  IGT '
+        producer: Fattoria Le Pupille
+        grapes: '100% Syrah. Nota: Può contenere tracce di altre varietà.'
+        production_location: Istia d'Ombrone (GR)
+        aging: 'Affinamento: 6 mesi in acciaio.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rosati
+    region:
+      - Toscana
+    zone: Radda in Chianti
+    items:
+      - name: 'Rosato  IGT '
+        producer: Tenuta di Carleone
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: in serbatoio di cemento.'
+        price_eur: 10
+        abv: 11.0%
+  - category:
+      - Vini Rosati
+    region:
+      - Toscana
+    zone: 'Val di Cornia '
+    items:
+      - name: 'Isy Rose  IGT '
+        producer: La Fralluca
+        grapes: '100% Syrah. Nota: Può contenere tracce di altre varietà.'
+        production_location: Suvereto (LI)
+        aging: 'Affinamento: in acciaio inox per preservare freschezza e aromi fruttati.'
+        price_eur: 10
+        abv: 13,5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Berardenga - Chianti Classico DOCG '
+        producer: Felsina
+        grapes: 'Sangiovese Nota: Può contenere tracce di altre varietà.'
+        production_location: ' Castelnuovo Berardenga (SI)'
+        aging: 'Affinamento: in botti di rovere per circa 12 mesi, seguito da un ulteriore periodo in bottiglia.'
+        price_eur: 10
+        abv: 13,5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Berardenga - Chianti Classico Riserva DOCG '
+        producer: Felsina
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: ' Castelnuovo Berardenga (SI)'
+        aging: 'Affinamento: in botti di rovere di Slavonia di media grandezza per 12-16 mesi, con una piccola parte in barrique usate.'
+        price_eur: 10
+        abv: 14.0%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Colonia - Chianti Classico Gran Selezione DOCG '
+        producer: Felsina
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: ' Castelnuovo Berardenga (SI)'
+        aging: 'Affinamento: 18 mesi in barrique di rovere.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Rancia - Chianti Classico Gran Selezione DOCG '
+        producer: Felsina
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: ' Castelnuovo Berardenga (SI)'
+        aging: 'Affinamento: 18 mesi in barrique.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Chianti Classico - Chianti Classico DOCG '
+        producer: Cantina Ripoli
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: in vasche di cemento per circa un anno e mezzo, seguito da 5 mesi in bottiglia.'
+        price_eur: 10
+        abv: 13-13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Chianti Classico - Chianti Classico DOCG '
+        producer: Cantina Ripoli
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: in vasche di cemento con successivi 5 mesi in bottiglia.'
+        price_eur: 10
+        abv: 13.0%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: Chianti Classico - Chianti Classico DOCG 2018
+        producer: Cantina Ripoli
+        grapes: 'Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: in vasche di cemento per circa un anno e mezzo.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Il Campitello Riserva - Chianti Classico Riserva DOCG '
+        producer: Monteraponi
+        grapes: '90% Sangiovese, 7% Canaiolo, 3% Colorino. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: 26 mesi in botti di rovere francesi da 30 hl, seguito da un ulteriore periodo in bottiglia.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: Pian del Ciampolo - Chianti Classico IGT 2023
+        producer: Montevertine
+        grapes: '90% Sangiovese, 5% Canaiolo, 5% Colorino. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: circa 12 mesi in botti di rovere di Slavonia.'
+        price_eur: 10
+        abv: 13-13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Querciabella Chianti Classico - Chianti Classico DOCG '
+        producer: Querciabella
+        grapes: 'Sangiovese Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: in barrique e tonneaux per circa 12 mesi, con malolattica svolta e uso di legno nuovo solo per il 5%.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Querciabella Gran Selezione - Chianti Classico Gran Selezione DOCG '
+        producer: Querciabella
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Lamole (FI)
+        aging: 'Affinamento: in barrique di rovere per 18 mesi, con uso di barrique nuove e usate in proporzione 30/70.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: 'Querciabella Riserva - Chianti Classico Riserva DOCG '
+        producer: Querciabella
+        grapes: 'Sangiovese Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: in barrique di rovere per 16 mesi, con una combinazione di legno nuovo e usato (circa 30% nuovo).'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Chianti Classico
+    items:
+      - name: Chianti Classico  - Chianti Classico DOCG 2020
+        producer: Castello di Cacchiano
+        grapes: '95% Sangiovese, 5% Malvasia Nera e Colorino. Nota: Può contenere tracce di altre varietà.'
+        production_location: Gaiole in Chianti (SI)
+        aging: 'Affinamento: maturazione in botti di rovere francese proveniente dalla zona Allier per un totale di 45 mesi, con successivo affinamento in bottiglia.'
+        price_eur: 38
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Yantra - Bolgheri DOC 2023
+        producer: Tenuta Sette Cieli
+        grapes: 'Cabernet Sauvignon, Merlot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bibbona (LI)
+        aging: 'Affinamento: in barrique di rovere di 4, 5 e 6 anni per un periodo non specificato.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Paleo  IGT 2021
+        producer: Le Macchiole
+        grapes: '100% Cabernet Franc. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: 16 mesi in barrique nuove, in tino troncoconico da 12 hl e anfora in gres.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Villa Donoratico - Bolgheri DOC 2022
+        producer: Argentiera
+        grapes: 'Cabernet Sauvignon, Merlot, Cabernet Franc, Petit Verdot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Castagneto Carducci (LI)
+        aging: 'Affinamento: in barrique di rovere francese per 12 mesi, seguito da affinamento in bottiglia.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: 'Guidalberto - Rosso di Toscana IGT '
+        producer: Tenuta San Guido
+        grapes: '60% Cabernet Sauvignon, 40% Merlot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: in barrique di rovere francese e americano per circa 12-15 mesi.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Le Difese - Rosso di Toscana IGT 2020
+        producer: Tenuta San Guido
+        grapes: '70% Cabernet Sauvignon, 30% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: circa 12 mesi in barrique di rovere francese e americano di secondo passaggio, seguiti da alcuni mesi in bottiglia.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Bruciato  DOCG 2023
+        producer: Guado al Tasso
+        grapes: '50% Cabernet Sauvignon, 30% Merlot, 20% Syrah. Nota: Può contenere tracce di altre varietà.'
+        production_location: Castagneto Carducci (LI)
+        aging: 'Affinamento: in botti di rovere per circa 12 mesi.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Riecine - Rosso di Toscana IGT 2020
+        producer: Riecine
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Gaiole in Chianti (SI)
+        aging: 'Affinamento: 24 mesi in uovo di cemento non vetrificato Nomblot e 6 mesi di affinamento in bottiglia.'
+        price_eur: 10
+        abv: 13%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Il Pino - Rosso di Toscana IGT 2023
+        producer: tenuta di Biserno
+        grapes: '40% Cabernet Franc, 22% Merlot, 18% Cabernet Sauvignon, 5% Petit Verdot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: in acciaio e barrique di rovere francese.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Insoglio del Cinghiale - Rosso di Toscana IGT 2020
+        producer: tenuta di Biserno
+        grapes: '33% Syrah, 33% Merlot, 14% Cabernet Franc, 14% Cabernet Sauvignon, 6% Petit Verdot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: 35% del volume affinato per circa 4 mesi in barrique usate di legno di rovere francese.'
+        price_eur: 10
+        abv: 14.0%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Cont'Ugo  DOC 2023
+        producer: Tenuta Guado al Tasso
+        grapes: '100% Merlot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: in barrique di secondo passaggio per 12 mesi.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri
+    items:
+      - name: Guado al Tasso  DOC 2022
+        producer: Tenuta Guado al Tasso
+        grapes: '60% Cabernet Sauvignon, 20% Merlot, 15% Cabernet Franc, 5% Petit Verdot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: in barrique di rovere francese nuove fino all''imbottigliamento, con fermentazione malolattica completata entro fine anno.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Bolgheri Superiore
+    items:
+      - name: Le Volte dell'Ornellaia - Rosso di Toscana IGT 2022
+        producer: Ornellaia
+        grapes: '50% Merlot, 30% Sangiovese, 20% Cabernet Sauvignon. Nota: Può contenere tracce di altre varietà.'
+        production_location: Bolgheri (LI)
+        aging: 'Affinamento: 10 mesi in parte in barrique usate e in parte in vasche di cemento.'
+        price_eur: 10
+        abv: 13%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Barberino Tavarnelle
+    items:
+      - name: Cepparello - Rosso di Toscana IGT 2020
+        producer: Isola e Olena
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Barberino Tavarnelle (FI)
+        aging: 'Affinamento: in botti di rovere francese per circa 18 mesi.'
+        price_eur: 10
+        abv: 15%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Castelnuovo Berardenga
+    items:
+      - name: 'Fontalloro  IGT '
+        producer: Felsina
+        grapes: 100% Sangiovese
+        production_location: ' Castelnuovo Berardenga (SI)'
+        aging: 'Affinamento: 18-22 mesi in barrique di rovere francese nuove e 8-12 mesi in bottiglia.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Castelnuovo Berardenga
+    items:
+      - name: Picconero - Rosso di Toscana IGT 2018
+        producer: Tolaini
+        grapes: '100% Merlot. Nota: Può contenere tracce di altre varietà.'
+        production_location: ' Castelnuovo Berardenga (SI)'
+        aging: 'Affinamento: in barriques di rovere francese nuove al 100% per 18 mesi, con 6 mesi sulle fecce fini.'
+        price_eur: 10
+        abv: 15%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Greve in Chianti
+    items:
+      - name: 'Camartina  IGT '
+        producer: Querciabella
+        grapes: '70% Cabernet Sauvignon, 30% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Greve in Chianti (FI)
+        aging: 'Affinamento: 18 mesi in barrique di rovere francese.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Maremma Toscana Cabernet
+    items:
+      - name: Francesca Romana - Rosso di Toscana IGT 2023
+        producer: Terenzi
+        grapes: 'Merlot, Cabernet Sauvignon, Petit Verdot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Scanzano (GR)
+        aging: 'Affinamento: fermentazione malolattica in acciaio, seguito da affinamento per 18 mesi in barriques di rovere francese e ulteriore affinamento in bottiglia.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montalcino
+    items:
+      - name: Ciliegiolo - Rosso di Toscana IGT 2019
+        producer: Mastrojanni
+        grapes: '100% Ciliegiolo. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montalcino (SI)
+        aging: 'Affinamento: circa 8 mesi in botte di rovere, seguiti da almeno 4 mesi in bottiglia.'
+        price_eur: 10
+        abv: 14.0%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montalcino
+    items:
+      - name: 'Lamaione - Rosso di Toscana IGT '
+        producer: Frescobaldi
+        grapes: 'Merlot Nota: Può contenere tracce di altre varietà.'
+        production_location: Montalcino (SI)
+        aging: 'Affinamento: 21 mesi in barrique di rovere francese nuove all''80%, seguito da un ulteriore periodo di affinamento in bottiglia.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montalcino
+    items:
+      - name: Come Se.. Merlot - Rosso di Toscana  2018
+        producer: Il colle di Carli
+        grapes: '100% Merlot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montalcino (SI)
+        aging: 'Affinamento: invecchiamento prolungato in botti di rovere fino a smorzare la vivacità tipica del Merlot.'
+        price_eur: 10
+        abv: 15%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 50&50  IGT 2020
+        producer: Avignonesi
+        grapes: '50% Merlot, 50% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Valiano di Montepulciano (SI)
+        aging: 'Affinamento: circa 18 mesi in barrique francesi.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: Desiderio  - Rosso di Toscana IGT 2018
+        producer: Avignonesi
+        grapes: '80% Merlot, 20% Cabernet Sauvignon. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: in barrique di rovere per oltre 18 mesi.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: Grifi - Rosso di Toscana IGT 2019
+        producer: Avignonesi
+        grapes: '50% Sangiovese, 50% Cabernet Sauvignon. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: in legno per 24 mesi.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Nobile di Montepulciano - Vino Nobile di Montepulciano  DOCG '
+        producer: Avignonesi
+        grapes: 'Prugnolo Gentile (Sangiovese), Canaiolo Nero, Mammolo, altre varietà autoctone. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: 18 mesi in botti grandi di rovere e successivo affinamento in bottiglia.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Poggetto di sopra - Vino Nobile di Montepulciano  DOCG '
+        producer: Avignonesi
+        grapes: '85% Sangiovese, 15% Canaiolo Nero. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: in botti di rovere per circa 12 mesi.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: Rosso di Montepulciano - Rosso di Montepulciano DOC 2024
+        producer: Avignonesi
+        grapes: 'Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: 6 mesi in barili e tonneaux.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Asinone - Vino Nobile di Montepulciano  DOCG '
+        producer: Poliziano
+        grapes: '100% Sangiovese (Prugnolo Gentile). Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: 16-18 mesi in barriques nuove di rovere francese.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Fiori Rossi - Rosso di Montepulciano DOC '
+        producer: Poliziano
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: 8 mesi in tini di legno da 30 hL, seguito da 6 mesi in bottiglia prima della commercializzazione.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Le Caggiole - Vino Nobile di Montepulciano  DOCG '
+        producer: Poliziano
+        grapes: '100% Sangiovese (Prugnolo Gentile). Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: 16-18 mesi in tonneaux da 500/600 litri di rovere francese.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Le stanze  IGT '
+        producer: Poliziano
+        grapes: '80% Cabernet Sauvignon, 20% Merlot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: 16 mesi in barrique nuove di rovere francese.'
+        price_eur: 10
+        abv: 15%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: Mandrone di Lohsa  DOC 2023
+        producer: Poliziano
+        grapes: '85% Cabernet Sauvignon, 15% Petit Verdot e Carignano. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: in barriques e tonneaux di rovere francese per 18 mesi.'
+        price_eur: 10
+        abv: 14-14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Pieve Valiano - Vino Nobile di Montepulciano  DOCG '
+        producer: Tenuta Trerose
+        grapes: 'Prugnolo Gentile, Canaiolo Nero, Mammolo, Colorino. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: almeno 36 mesi, con almeno un anno in botti di rovere e un anno in bottiglia.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Salterio - Rosso di Montepulciano DOC '
+        producer: Tenuta Trerose
+        grapes: 'Prugnolo Gentile, Canaiolo Nero, Mammolo, Merlot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: in botti di acciaio inox per circa 6 mesi.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Santa Caterina - Vino Nobile di Montepulciano  DOCG '
+        producer: Tenuta Trerose
+        grapes: '100% Sangiovese (Prugnolo Gentile). Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: 18 mesi in botti di rovere da 60-70 hl, seguito da 6 mesi in bottiglia.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montepulciano
+    items:
+      - name: 'Simposio Riserva - Vino Nobile di Montepulciano  DOCG '
+        producer: Tenuta Trerose
+        grapes: '100% Sangiovese (Prugnolo Gentile). Nota: Può contenere tracce di altre varietà.'
+        production_location: Montepulciano (SI)
+        aging: 'Affinamento: in botti di rovere di Slavonia da 30 e 40 ettolitri per 18 mesi.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Monteregio di Massa Marittima
+    items:
+      - name: 'Saffredi  IGT '
+        producer: Fattoria Le Pupille
+        grapes: '60% Cabernet Sauvignon, 30% Merlot, 10% Petit Verdot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Istia d'Ombrone (GR)
+        aging: 'Affinamento: 18 mesi in barrique, con il 75% di barrique nuove.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Monteregio di Massa Marittima
+    items:
+      - name: 'Syrah Le Pupille  IGT '
+        producer: Fattoria Le Pupille
+        grapes: 'Syrah, Nota: Può contenere tracce di altre varietà.'
+        production_location: Istia d'Ombrone (GR)
+        aging: 'Affinamento: in botti di rovere per circa 12 mesi.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Monteregio di Massa Marittima
+    items:
+      - name: 'Avvoltore  IGT '
+        producer: MorisFarms
+        grapes: '50% Sangiovese, 25% Cabernet Sauvignon, 25% Syrah. Nota: Può contenere tracce di altre varietà.'
+        production_location: Massa Marittima (PI)
+        aging: 'Affinamento: circa 12 mesi in barrique nuove all''80% e 6 mesi in bottiglia.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montescudaio
+    items:
+      - name: Montaleo - Montescudaio DOC 2023
+        producer: Pagani de Marchi
+        grapes: '70% Sangiovese, 15% Merlot, 15% Cabernet Sauvignon. Nota: Può contenere tracce di altre varietà.'
+        production_location: Casale Marittimo (PI)
+        aging: 'Affinamento: il vino subisce un affinamento in bottiglia da 6 a 8 mesi.'
+        price_eur: 10
+        abv: 13%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montescudaio
+    items:
+      - name: Olmata - Montescudaio IGT 2022
+        producer: Pagani de Marchi
+        grapes: '50% Merlot, 30% Cabernet Sauvignon, 20% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Casale Marittimo (PI)
+        aging: 'Affinamento: in barrique per un periodo variabile, seguito da affinamento in bottiglia di almeno 12 mesi.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Montescudaio
+    items:
+      - name: Principe Guerriero  IGT 2021
+        producer: Pagani de Marchi
+        grapes: '70% Sangiovese, 15% Merlot, 15% Cabernet Sauvignon. Nota: Può contenere tracce di altre varietà.'
+        production_location: Casale Marittimo (PI)
+        aging: 'Affinamento: in anfora per almeno 12 mesi.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Morellino di Scansano
+    items:
+      - name: 'Morellino di Scansano - Morellino di Scansano DOCG '
+        producer: MorisFarms
+        grapes: 'Morellino (Sangiovese), Alicante, Syrah, Merlot, Cabernet Sauvignon. Nota: Può contenere tracce di altre varietà.'
+        production_location: Poggio la Mozza (GR)
+        aging: 'Affinamento: in serbatoio di acciaio inox per 4 mesi, seguito da un ulteriore affinamento di almeno 2 mesi in bottiglia.'
+        price_eur: 10
+        abv: 13-14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Morellino di Scansano
+    items:
+      - name: 'Morellino di Scansano - Morellino di Scansano DOCG '
+        producer: MorisFarms
+        grapes: '90% Sangiovese, 10% altre varietà a bacca rossa autorizzate. Nota: Può contenere tracce di altre varietà.'
+        production_location: Poggio la Mozza (GR)
+        aging: 'Affinamento: imbottigliato dopo 4 mesi senza passaggio in legno, con un ulteriore affinamento di almeno 2 mesi.'
+        price_eur: 10
+        abv: 13-14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Morellino di Scansano
+    items:
+      - name: 'Morellino di Scansano Riserva - Morellino di Scansano DOCG '
+        producer: MorisFarms
+        grapes: '90% Sangiovese, 7% Cabernet Sauvignon, 3% Merlot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Poggio la Mozza (GR)
+        aging: 'Affinamento: in vetro per almeno sei mesi.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Morellino di Scansano
+    items:
+      - name: 'Morellino di Scansano Riserva - Morellino di Scansano DOCG '
+        producer: MorisFarms
+        grapes: '90% Sangiovese, 10% Merlot. Nota: Può contenere tracce di altre varietà.'
+        production_location: Poggio la Mozza (GR)
+        aging: 'Affinamento: in vetro per almeno sei mesi.'
+        price_eur: 10
+        abv: 13.5-14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Peccioli
+    items:
+      - name: 'Veneroso - Terre di Pisa Rosso DOC '
+        producer: Tenuta di Ghizzano
+        grapes: '70% Sangiovese, 30% Cabernet Sauvignon. Nota: Può contenere tracce di altre varietà.'
+        production_location: Ghizzano (PI)
+        aging: 'Affinamento: 16 mesi in tonneaux (botti di rovere da 500 litri) e 18 mesi in bottiglia.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Radda in Chianti
+    items:
+      - name: 'Il Guercio  IGT '
+        producer: Tenuta Carleone
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: 12 mesi in vasca di cemento.'
+        price_eur: 10
+        abv: 12.5-13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Radda in Chianti
+    items:
+      - name: 'Il Randagio  IGT '
+        producer: Tenuta Carleone
+        grapes: '50% Merlot, 50% Cabernet Franc. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: 12 mesi in vasca di cemento.'
+        price_eur: 10
+        abv: 12.5-13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Radda in Chianti
+    items:
+      - name: Le Pergole Torte - Radda in Chianti IGT 2019
+        producer: Montevertine
+        grapes: 100% Sangiovese
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: in grandi botti di rovere di Slavonia per 18 mesi, seguito da 6 mesi in piccole botti di rovere francese (Allier).'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Radda in Chianti
+    items:
+      - name: Le Pergole Torte - Radda in Chianti IGT 2020
+        producer: Montevertine
+        grapes: 100% Sangiovese
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: in grandi botti di rovere di Slavonia per 18 mesi, seguito da 6 mesi in piccole botti di rovere francese (Allier).'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Radda in Chianti
+    items:
+      - name: Montevertine - Radda in Chianti IGT 2022
+        producer: Montevertine
+        grapes: '90% Sangiovese, 5% Canaiolo, 5% Colorino. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: 24 mesi in botti di rovere e 3 mesi in bottiglia'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Radda in Chianti
+    items:
+      - name: 'Uno  IGT '
+        producer: Tenuta di Carleone
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Radda in Chianti (SI)
+        aging: 'Affinamento: 18 mesi, con il 10% in tonneaux nuovi e il resto in cemento e acciaio.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Riparbella
+    items:
+      - name: Duemani  - Riparbella IGT 2020
+        producer: Duemani
+        grapes: 100% Cabernet Franc
+        production_location: Riparbella (PI)
+        aging: 'Affinamento: in barrique di rovere francese per circa 12 mesi.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Riparbella
+    items:
+      - name: 'Altrovino - Riparbella IGT '
+        producer: Duemani
+        grapes: '50% Merlot, 50% Cabernet Franc. Nota: Può contenere tracce di altre varietà.'
+        production_location: Riparbella (PI)
+        aging: 'Affinamento: 8 mesi in tini troncoconici di rovere.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Riparbella
+    items:
+      - name: Altrovino - Riparbella IGT 2022
+        producer: Duemani
+        grapes: '50% Merlot, 50% Cabernet Franc. Nota: Può contenere tracce di altre varietà.'
+        production_location: Riparbella (PI)
+        aging: 'Affinamento: in tini troncoconici di rovere per 8 mesi.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Riparbella
+    items:
+      - name: Cifra  IGT 2022
+        producer: Duemani
+        grapes: '100% Cabernet Franc. Nota: Può contenere tracce di altre varietà.'
+        production_location: Riparbella (PI)
+        aging: 'Affinamento: fermentazione spontanea e affinamento in vasche di cemento senza aggiunta di lieviti, senza uso di barrique.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: San Casciano in val di  Pesa
+    items:
+      - name: 'Tignanello - Rosso di Toscana IGT '
+        producer: Antinori
+        grapes: '80% Sangiovese, 15% Cabernet Sauvignon, 5% Cabernet Franc. Nota: Può contenere tracce di altre varietà.'
+        production_location: San Casciano val di Pesa (FI)
+        aging: 'Affinamento: in barrique di rovere francese e ungherese per 14-16 mesi, in parte nuove e in parte di secondo passaggio, seguito da un ulteriore affinamento in bottiglia di circa 12 mesi.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Suvereto
+    items:
+      - name: 'I Mandorli Cabernet - Suvereto IGT '
+        producer: I Mandorli
+        grapes: '100% Cabernet Sauvignon. Nota: Può contenere tracce di altre varietà.'
+        production_location: Suvereto (LI)
+        aging: 'Affinamento: in botti grandi e cemento per circa 15 mesi, seguito da almeno 12 mesi in bottiglia.'
+        price_eur: 10
+        abv: 14-14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Suvereto
+    items:
+      - name: 'I Mandorli Sangiovese - Suvereto IGT '
+        producer: I Mandorli
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: Suvereto (LI)
+        aging: 'Affinamento: 12 mesi in vasca di cemento vetrificato.'
+        price_eur: 10
+        abv: 13.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: 'Val di Cornia '
+    items:
+      - name: 'Cabernet Franc  IGT '
+        producer: La Fralluca
+        grapes: '100% Cabernet Franc. Nota: Può contenere tracce di altre varietà.'
+        production_location: Suvereto (LI)
+        aging: 'Affinamento: in botti di rovere francese per 18 mesi.'
+        price_eur: 10
+        abv: 14.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: 'Val di Cornia '
+    items:
+      - name: Costa Toscana Cabernet Franc - Riparbella IGT 2023
+        producer: La Fralluca
+        grapes: '100% Cabernet Franc. Nota: Può contenere tracce di altre varietà.'
+        production_location: Suvereto (LI)
+        aging: 'Affinamento: in botti di legno per circa 9 mesi, con parte della maturazione in contenitori di grès ceramico naturale.'
+        price_eur: 10
+        abv: 13-14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: 'Val di Cornia '
+    items:
+      - name: Fillide  IGT 2020
+        producer: La Fralluca
+        grapes: '60% Sangiovese, 25% Syrah, 15% Alicante Bouschet. Nota: Può contenere tracce di altre varietà.'
+        production_location: Suvereto (LI)
+        aging: 'Affinamento: maturazione in legni di varie dimensioni per almeno 18 mesi, seguita da un lungo affinamento in bottiglia.'
+        price_eur: 10
+        abv: 14%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: 'Val di Cornia '
+    items:
+      - name: I Mandorli Rosso   2023
+        producer: I Mandorli
+        grapes: 'Sangiovese, Cabernet Franc, Cabernet Sauvignon. Nota: Può contenere tracce di altre varietà.'
+        production_location: Suvereto (LI)
+        aging: 'Affinamento: in vasche di cemento vetrificato per 8 mesi/1 anno.'
+        price_eur: 10
+        abv: 12.5%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Valdarno di Sopra
+    items:
+      - name: Il Borro - Rosso di Toscana IGT 2019
+        producer: Il Borro
+        grapes: '50% Merlot, 35% Cabernet Sauvignon, 10% Syrah, 5% Petit Verdot. Nota: Può contenere tracce di altre varietà.'
+        production_location: San Giustino Valdarno (AR)
+        aging: 'Affinamento: 18 mesi, in parte in botti da 20 hl per il Merlot, e in barrique di rovere di primo e secondo passaggio per Cabernet Sauvignon e Syrah, seguito da 6 mesi in acciaio.'
+        price_eur: 10
+        abv: 15%
+  - category:
+      - Vini Rossi
+    region:
+      - Toscana
+    zone: Valdarno di Sopra
+    items:
+      - name: 'Petruna Sangiovese in Anfora - Valdarno di Sopra DOC '
+        producer: Il Borro
+        grapes: '100% Sangiovese. Nota: Può contenere tracce di altre varietà.'
+        production_location: San Giustino Valdarno (AR)
+        aging: 'Affinamento: fermentazione e affinamento in anfora di terracotta.'
+        price_eur: 10
+        abv: 14%

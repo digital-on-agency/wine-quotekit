@@ -334,8 +334,9 @@ function buildWineListContext(rawData, absData) {
  * Output directory for generated files. If provided, it is resolved to an absolute path;
  * otherwise the default `OUT_DIR` is used.
  *
- * @returns {Promise<void>}
- * Resolves when the HTML (and PDF, if enabled) have been written.
+ * @returns {Promise<string>}
+ * Resolves with the absolute path to the generated PDF file when the HTML (and PDF, if enabled) have been written.
+ * Returns the PDF path if PDF was generated, or the HTML path if onlyHtml is true.
  *
  * @throws {Error}
  * Propagates filesystem, YAML parsing, Handlebars compilation, or Puppeteer errors.
@@ -392,11 +393,12 @@ export async function build(
   fs.writeFileSync(htmlPath, html, "utf8");
 
   if (onlyHtml) {
-    logger.info(`HTML pronto: ${htmlPath}`, {
-      location: "src/build.js:build",
-      htmlPath: htmlPath,
-    });
-    return;
+    // TODO: keeo or not?
+    // logger.info(`HTML pronto: ${htmlPath}`, {
+    //   location: "src/build.js:build",
+    //   htmlPath: htmlPath,
+    // });
+    return htmlPath;
   }
 
   // Launch a headless browser and navigate to the HTML file
@@ -417,10 +419,14 @@ export async function build(
   // Close the browser
   await browser.close();
 
-  logger.info(`PDF pronto: ${pdfPath}`, {
-    location: "src/build.js:build",
-    pdfPath: pdfPath,
-  });
+  // TODO: keeo or not?
+  // logger.info(`PDF pronto: ${pdfPath}`, {
+  //   location: "src/build.js:build",
+  //   pdfPath: pdfPath,
+  // });
+
+  // Return the PDF path so callers can use it
+  return pdfPath;
 }
 
 // Entry point: parse CLI arguments and run build
