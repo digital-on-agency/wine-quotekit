@@ -97,6 +97,52 @@ export function wineDataCleaner(data) {
   return cleanedRecords;
 }
 
+/** Build a **Zone Mapping dictionary** from the Airtable *Zones* table.
+ *
+ * This function:
+ * - Fetches all zone records from Airtable using `fetchDefaultTableRecords`
+ * - Normalizes heterogeneous field names coming from Airtable
+ * - Builds a **lookup object keyed by record ID**
+ * - Safely skips malformed or incomplete records while logging warnings
+ *
+ * The resulting structure is optimized for fast access when generating
+ * wine lists or performing zone-based grouping/sorting logic.
+ *
+ * @returns {Promise<Object<string, {
+ *   id: string,
+ *   name: string|null,
+ *   region: string|null,
+ *   country: string|null,
+ *   priority: number|null
+ * }>>}
+ * A promise resolving to an object where:
+ * - **keys** are Airtable record IDs (`rec...`)
+ * - **values** are normalized zone descriptors
+ *
+ * @throws {Error}
+ * Thrown when:
+ * - The Airtable fetch fails
+ * - An unexpected error occurs while processing records
+ *
+ * @usage
+ * ```js
+ * const zoneMap = await getZoneMapping();
+ *
+ * const piemonte = zoneMap["recXXXXXXXXXXXX"];
+ * console.log(piemonte.name);     // "Langhe"
+ * console.log(piemonte.region);   // "Piemonte"
+ * console.log(piemonte.country);  // "Italia"
+ * console.log(piemonte.priority); // 1
+ * ```
+ *
+ * @notes
+ * - Field names are normalized defensively to support schema variations:
+ *   - `name`: `"Nome Zona"` → `"Zona"` → `"Nome"`
+ *   - `priority`: `"Priorità Zone"` → `"Priorità Zona"`
+ * - Records without a valid Airtable `id` are skipped and logged.
+ * - Missing fields are returned as `null` (never `undefined`).
+ * - The function is **read-only** and does not mutate Airtable data.
+ */
 export async function getZoneMapping() {
   // Fetch zones data from Airtable
   try {
@@ -394,74 +440,76 @@ export function wineDataSorter(data, zoneMapping = undefined) {
   return sortedData;
 }
 
-/** Validates and normalizes Airtable wine records for downstream export/rendering.
+/** Validate and normalize raw **Airtable wine records** into a predictable structure,
+ * splitting results into **valid**, **warning**, and **invalid** groups.
  *
- * This function iterates over raw Airtable records and produces:
- * - a list of **valid normalized records** (ready for YAML/PDF generation)
- * - a list of **warning records** (missing optional fields)
- * - a list of **invalid records** (missing required fields or invalid price)
+ * The function:
+ * - Iterates records **sequentially** to support async lookups (e.g. producer name resolution)
+ * - Enforces **required** fields (missing required fields mark a record as *invalid*)
+ * - Extracts values from Airtable “AI fields” that may be returned as **strings**, **arrays**, or **objects**
+ * - Converts and normalizes the **price** into a numeric `price_eur` with **2 decimals**
+ * - Resolves the **zone name** using the provided `zoneMapping`
+ * - Collects a de-duplicated list of encountered **categories**
  *
- * Required fields (record is **invalid** if missing):
- * - `"Vino + Annata"` (name)
- * - `"Produttore"` (producer)
- * - `"Zona"` (zone)
- * - `"Prezzo In Carta Testo"` (price)
- * - `"Tipologia"` (category)
- * - `"Regione"` (region)
+ * @param {Array<object>} data
+ * Raw Airtable record list (expected shape: each item has at least `{ id: string, fields: object }`),
+ * typically returned from Airtable *List records* endpoints.
  *
- * Optional fields (record is **warning** if missing):
- * - `"Lista Vitigni AI"` (grapes)
- * - `"Luogo di Produzione"` (production location)
- * - `"Affinamento AI"` (aging)
- * - `"Alcolicità AI"` (abv)
- *
- * Zone normalization:
- * - Attempts to resolve the zone name via `zoneMapping`
- * - Falls back to the zone ID when mapping is not available
- *
- * Price normalization:
- * - Parses `"Prezzo In Carta Testo"` into a `number` with 2 decimals
- * - Treats parsing failures as invalid (`price_eur`)
- *
- * @param {Array<any>} data
- * Array of Airtable records to validate. Each record is expected to include
- * a `fields` object containing the wine attributes.
- *
- * @param {Record<string, any>} zoneMapping
- * Mapping of zone IDs to zone metadata (e.g. `{ id, name, priority, ... }`),
- * used to resolve a human-readable zone name.
+ * @param {Record<string, { id: string, name: string, region?: string, country?: string, priority?: number }>} zoneMapping
+ * A mapping object keyed by Airtable **Zone record ID** that resolves zone metadata (at minimum `name`).
+ * Used to convert `record.fields["Zona"]` into a human-readable zone label.
  *
  * @returns {{
- *   validRecords: Array<Record<string, any>>;
- *   warningRecords: Array<{ id: string; warningFields: string[] }>;
- *   invalidRecords: Array<{ id: string; invalidFields: string[] }>;
- *   categories: Array<string>;
+ *   validRecords: Array<{
+ *     name: string,
+ *     producer: string,
+ *     zone: string,
+ *     price_eur: number,
+ *     category: string,
+ *     region: string,
+ *     grapes?: string,
+ *     production_location?: string,
+ *     aging?: string,
+ *     abv?: string
+ *   }>,
+ *   warningRecords: Array<{ id: string, warningFields: Array<string> }>,
+ *   invalidRecords: Array<{ id: string, invalidFields: Array<string> }>,
+ *   categories: Array<string>
  * }}
  * An object containing:
- * - `validRecords`: normalized wine objects
- * - `warningRecords`: record IDs plus missing optional fields
- * - `invalidRecords`: record IDs plus missing required/invalid fields
- * - `categories`: list of categories
+ * - `validRecords`: normalized records ready for downstream processing (e.g. YAML/PDF generation)
+ * - `warningRecords`: record IDs with missing optional fields
+ * - `invalidRecords`: record IDs missing required fields (or failing critical conversions)
+ * - `categories`: unique set of categories found across processed records
  *
  * @throws {Error}
- * Throws if a zone ID is missing when resolving `"Zona"` (defensive check).
+ * Thrown when an unexpected runtime error occurs during iteration/normalization.
+ * The thrown error includes diagnostic context such as partial outputs and inputs.
  *
  * @usage
- * ```ts
+ * ```js
  * const zoneMapping = await getZoneMapping();
- * const { validRecords, warningRecords, invalidRecords } =
- *   wineDataValidationAndNormalization(records, zoneMapping);
+ * const { validRecords, warningRecords, invalidRecords, categories } =
+ *   await wineDataValidationAndNormalization(airtableRows, zoneMapping);
  *
- * console.log("Valid:", validRecords.length);
- * console.log("Warnings:", warningRecords.length);
- * console.log("Invalid:", invalidRecords.length);
+ * if (invalidRecords.length) {
+ *   console.log("Some records are invalid:", invalidRecords);
+ * }
+ *
+ * // Use validRecords for YAML/PDF generation
+ * buildWineListYaml(validRecords, categories);
  * ```
  *
  * @notes
- * - This function does not mutate the input records.
- * - Logging is used to surface missing zone IDs, missing mappings, and price parsing failures.
- * - Records with warnings are tracked separately but are currently not included in `validRecords`.
- *   (If desired, warnings could still be emitted as valid outputs in a future iteration.)
+ * - **Required fields** (record becomes *invalid* if missing):
+ *   - `"Vino + Annata"`, `"Produttore"`, `"Zona"`, `"Prezzo In Carta Testo"`, `"Tipologia"`, `"Regione"`
+ * - **Optional fields** (missing fields generate a *warning*):
+ *   - `"Lista Vitigni AI"`, `"Luogo di Produzione"`, `"Affinamento AI"`, `"Alcolicità AI"`
+ * - Producer resolution uses an async lookup (`getEnotecaDataById`) and extracts `producerData.fields["Nome"]`.
+ * - Price parsing:
+ *   - Accepts strings with comma decimals (e.g. `"12,50 €"`) and strips non-numeric characters.
+ *   - Produces `price_eur` as a `number` with **two decimals**.
+ * - The function does not mutate input `data` or `zoneMapping`.
  */
 export async function wineDataValidationAndNormalization(data, zoneMapping) {
   // Helper function to extract value from Airtable AI fields
@@ -490,13 +538,44 @@ export async function wineDataValidationAndNormalization(data, zoneMapping) {
     return field;
   };
 
+  /** Resolve the **human-readable zone name** from a given zone ID.
+   *
+   * This utility function:
+   * - Validates the presence of a zone ID
+   * - Safely accesses the global/local `zoneMapping` object
+   * - Falls back gracefully when the mapping is unavailable or incomplete
+   *
+   * It is designed to be used during **wine list generation and YAML building**
+   * where zone IDs must be converted into displayable labels.
+   *
+   * @param {string} zoneId
+   * The Airtable **Zone record ID** to resolve.
+   *
+   * @returns {string}
+   * The resolved **zone name** if available, otherwise the original `zoneId`.
+   *
+   * @throws {Error}
+   * Thrown when `zoneId` is missing or falsy.
+   *
+   * @usage
+   * ```js
+   * const zoneName = getZoneName("recA1B2C3");
+   * console.log(zoneName); // "Langhe"
+   * ```
+   *
+   * @notes
+   * - If `zoneMapping` is not defined or not an object, the function logs a warning
+   *   and returns the raw `zoneId`.
+   * - If the zone exists but has no `name`, the `zoneId` is returned as fallback.
+   * - This function does **not** mutate `zoneMapping`.
+   */
   const getZoneName = (zoneId) => {
     if (!zoneId) {
-      logger.error("Zone ID not found", {
-        location: "src/lib/wineList.js:wineDataYamlBuilder",
+      throw new Error({
+        msg: "Zone ID not found",
+        source: "src/lib/wineList.js:wineDataYamlBuilder",
         zone_id: zoneId,
       });
-      throw new Error("Zone ID not found");
     }
     // Safety check: if zoneMapping is not provided, return the zoneId as-is
     if (!zoneMapping || typeof zoneMapping !== "object") {
@@ -516,161 +595,180 @@ export async function wineDataValidationAndNormalization(data, zoneMapping) {
   const invalidRecords = [];
 
   // Process records sequentially to handle async producer lookup
-  for (let i = 0; i < data.length; i++) {
-    const record = data[i];
-    let currentRecord = {};
-    let invalidFields = [];
-    let warningFields = [];
+  try {
+    for (let i = 0; i < data.length; i++) {
+      const record = data[i];
+      let currentRecord = {};
+      let invalidFields = [];
+      let warningFields = [];
 
-    // name - REQUIRED, if missing SKIP
-    if (
-      !record.fields["Vino + Annata"] ||
-      record.fields["Vino + Annata"] === ""
-    ) {
-      invalidFields.push("Vino + Annata");
-    } else {
-      currentRecord.name = record.fields["Vino + Annata"];
-    }
-
-    // producer - REQUIRED, if missing SKIP
-    if (!record.fields["Produttore"] || record.fields["Produttore"] === "") {
-      invalidFields.push("Produttore");
-    } else {
-      // currentRecord.producer = record.fields["Produttore"];
-      try {
-        const producerData = await getEnotecaDataById(
-          record.fields["Produttore"]
-        );
-        currentRecord.producer = producerData.fields["Nome"];
-      } catch (error) {
-        invalidFields.push("Produttore");
-        logger.error("Error getting producer data by id", {
-          location: "src/lib/wineList.js:wineDataValidationAndNormalization",
-          producerId: record.fields["Produttore"],
-          error: error.message,
-        });
+      // name - REQUIRED, if missing SKIP
+      if (
+        !record.fields["Vino + Annata"] ||
+        record.fields["Vino + Annata"] === ""
+      ) {
+        invalidFields.push("Vino + Annata");
+      } else {
+        currentRecord.name = record.fields["Vino + Annata"];
       }
-    }
 
-    // grapes (lista vitigni ai) - OPTIONAL, if missing IGNORE FIELD
-    const grapesValue = extractValue(record.fields["Lista Vitigni AI"]);
-    if (!grapesValue || grapesValue === "") {
-      warningFields.push("Lista Vitigni AI");
-    } else {
-      currentRecord.grapes = grapesValue;
-    }
-
-    // production_location (luogo di produzione) - OPTIONAL, if missing IGNORE FIELD
-    const productionLocationValue = extractValue(
-      record.fields["Luogo di Produzione"]
-    );
-    if (!productionLocationValue || productionLocationValue === "") {
-      warningFields.push("Luogo di Produzione");
-    } else {
-      currentRecord.production_location = productionLocationValue;
-    }
-
-    // zone - REQUIRED, if missing SKIP
-    if (!record.fields["Zona"] || record.fields["Zona"] === "") {
-      invalidFields.push("Zona");
-    } else {
-      currentRecord.zone = getZoneName(record.fields["Zona"]);
-    }
-
-    // aging (affinamento ai) - OPTIONAL, if missing IGNORE FIELD
-    const agingValue = extractValue(record.fields["Affinamento AI"]);
-    if (!agingValue || agingValue === "") {
-      warningFields.push("Affinamento AI");
-    } else {
-      currentRecord.aging = agingValue;
-    }
-
-    // price_eur (Prezzo In Carta Testo) - REQUIRED, if missing SKIP
-    if (
-      !record.fields["Prezzo In Carta Testo"] ||
-      record.fields["Prezzo In Carta Testo"] === ""
-    ) {
-      invalidFields.push("Prezzo In Carta Testo");
-    } else {
-      // convert price to float with two decimal places, if possible
-      const rawPrice = record.fields["Prezzo In Carta Testo"];
-      let floatPrice = null;
-
-      // try to convert price to float with two decimal places
-      try {
-        // replace comma with dot and remove non-numeric/display characters
-        if (typeof rawPrice === "string") {
-          floatPrice = parseFloat(
-            rawPrice.replace(",", ".").replace(/[^\d.]/g, "")
+      // producer - REQUIRED, if missing SKIP
+      if (!record.fields["Produttore"] || record.fields["Produttore"] === "") {
+        invalidFields.push("Produttore");
+      } else {
+        // currentRecord.producer = record.fields["Produttore"];
+        try {
+          const producerData = await getEnotecaDataById(
+            record.fields["Produttore"]
           );
-        } else {
-          floatPrice = parseFloat(rawPrice);
+          currentRecord.producer = producerData.fields["Nome"];
+        } catch (error) {
+          invalidFields.push("Produttore");
+          logger.warning({
+            msg: "Error getting producer data by id",
+            source: "src/lib/wineList.js:wineDataValidationAndNormalization",
+            location: "src/lib/wineList.js:wineDataValidationAndNormalization",
+            producerId: record.fields["Produttore"],
+            error: error.message,
+          });
         }
+      }
 
-        if (isNaN(floatPrice)) {
-          throw new Error(`Conversion error: value is NaN after parsing`);
-        }
+      // grapes (lista vitigni ai) - OPTIONAL, if missing IGNORE FIELD
+      const grapesValue = extractValue(record.fields["Lista Vitigni AI"]);
+      if (!grapesValue || grapesValue === "") {
+        warningFields.push("Lista Vitigni AI");
+      } else {
+        currentRecord.grapes = grapesValue;
+      }
 
-        currentRecord.price_eur = parseFloat(floatPrice.toFixed(2));
-      } catch (err) {
-        // log error and mark record as invalid for price_eur
-        invalidFields.push("price_eur");
-        logger.error(
-          "Error converting price 'Prezzo In Carta Testo' to float",
-          {
+      // production_location (luogo di produzione) - OPTIONAL, if missing IGNORE FIELD
+      const productionLocationValue = extractValue(
+        record.fields["Luogo di Produzione"]
+      );
+      if (!productionLocationValue || productionLocationValue === "") {
+        warningFields.push("Luogo di Produzione");
+      } else {
+        currentRecord.production_location = productionLocationValue;
+      }
+
+      // zone - REQUIRED, if missing SKIP
+      if (!record.fields["Zona"] || record.fields["Zona"] === "") {
+        invalidFields.push("Zona");
+      } else {
+        currentRecord.zone = getZoneName(record.fields["Zona"]);
+      }
+
+      // aging (affinamento ai) - OPTIONAL, if missing IGNORE FIELD
+      const agingValue = extractValue(record.fields["Affinamento AI"]);
+      if (!agingValue || agingValue === "") {
+        warningFields.push("Affinamento AI");
+      } else {
+        currentRecord.aging = agingValue;
+      }
+
+      // price_eur (Prezzo In Carta Testo) - REQUIRED, if missing SKIP
+      if (
+        !record.fields["Prezzo In Carta Testo"] ||
+        record.fields["Prezzo In Carta Testo"] === ""
+      ) {
+        invalidFields.push("Prezzo In Carta Testo");
+      } else {
+        // convert price to float with two decimal places, if possible
+        const rawPrice = record.fields["Prezzo In Carta Testo"];
+        let floatPrice = null;
+
+        // try to convert price to float with two decimal places
+        try {
+          // replace comma with dot and remove non-numeric/display characters
+          if (typeof rawPrice === "string") {
+            floatPrice = parseFloat(
+              rawPrice.replace(",", ".").replace(/[^\d.]/g, "")
+            );
+          } else {
+            floatPrice = parseFloat(rawPrice);
+          }
+
+          if (isNaN(floatPrice)) {
+            throw new Error(`Conversion error: value is NaN after parsing`);
+          }
+
+          currentRecord.price_eur = parseFloat(floatPrice.toFixed(2));
+        } catch (err) {
+          // log error and mark record as invalid for price_eur
+          invalidFields.push("price_eur");
+          logger.warning({
+            msg: "Error converting price 'Prezzo In Carta Testo' to float",
+            source: "src/lib/wineList.js:wineDataValidationAndNormalization",
+            location: "src/lib/wineList.js:wineDataValidationAndNormalization",
             prezzo_grezzo: rawPrice,
             record_id: record.id,
-          }
-        );
-        currentRecord.price_eur = null;
+            error: err.message,
+          });
+          currentRecord.price_eur = null;
+        }
+      }
+
+      // abv (alcolicità ai) - OPTIONAL, if missing IGNORE FIELD
+      const abvValue = extractValue(record.fields["Alcolicità AI"]);
+      if (!abvValue || abvValue === "") {
+        warningFields.push("Alcolicità AI");
+      } else {
+        // utilizza il valore originale di "Alcolicità AI" senza standardizzare
+        currentRecord.abv = abvValue;
+      }
+
+      // category - REQUIRED, if missing SKIP
+      if (!record.fields["Tipologia"] || record.fields["Tipologia"] === "") {
+        invalidFields.push("Tipologia");
+      } else {
+        currentRecord.category = record.fields["Tipologia"];
+      }
+
+      // region - REQUIRED, if missing SKIP
+      if (!record.fields["Regione"] || record.fields["Regione"] === "") {
+        invalidFields.push("Regione");
+      } else {
+        currentRecord.region = record.fields["Regione"];
+      }
+
+      // add category to categories array (only if category exists and is a string)
+      if (
+        currentRecord.category &&
+        typeof currentRecord.category === "string" &&
+        !categories.includes(currentRecord.category)
+      ) {
+        categories.push(currentRecord.category);
+      }
+
+      if (invalidFields.length > 0) {
+        invalidRecords.push({
+          id: record.id,
+          invalidFields: invalidFields,
+        });
+      } else if (warningFields.length > 0) {
+        warningRecords.push({
+          id: record.id,
+          warningFields: warningFields,
+        });
+      } else {
+        validRecords.push(currentRecord);
       }
     }
-
-    // abv (alcolicità ai) - OPTIONAL, if missing IGNORE FIELD
-    const abvValue = extractValue(record.fields["Alcolicità AI"]);
-    if (!abvValue || abvValue === "") {
-      warningFields.push("Alcolicità AI");
-    } else {
-      // utilizza il valore originale di "Alcolicità AI" senza standardizzare
-      currentRecord.abv = abvValue;
-    }
-
-    // category - REQUIRED, if missing SKIP
-    if (!record.fields["Tipologia"] || record.fields["Tipologia"] === "") {
-      invalidFields.push("Tipologia");
-    } else {
-      currentRecord.category = record.fields["Tipologia"];
-    }
-
-    // region - REQUIRED, if missing SKIP
-    if (!record.fields["Regione"] || record.fields["Regione"] === "") {
-      invalidFields.push("Regione");
-    } else {
-      currentRecord.region = record.fields["Regione"];
-    }
-
-    // add category to categories array (only if category exists and is a string)
-    if (
-      currentRecord.category &&
-      typeof currentRecord.category === "string" &&
-      !categories.includes(currentRecord.category)
-    ) {
-      categories.push(currentRecord.category);
-    }
-
-    if (invalidFields.length > 0) {
-      invalidRecords.push({
-        id: record.id,
-        invalidFields: invalidFields,
-      });
-    } else if (warningFields.length > 0) {
-      warningRecords.push({
-        id: record.id,
-        warningFields: warningFields,
-      });
-    } else {
-      validRecords.push(currentRecord);
-    }
+  } catch (error) {
+    throw new Error({
+      msg: "Error validating and normalizing wine data",
+      source: "src/lib/wineList.js:wineDataValidationAndNormalization",
+      error: error.message,
+      status: error.status,
+      statusText: error.statusText,
+      data: data,
+      zoneMapping: zoneMapping,
+      validRecords: validRecords,
+      warningRecords: warningRecords,
+      invalidRecords: invalidRecords,
+      categories: categories,
+    });
   }
 
   return {
@@ -938,39 +1036,10 @@ export default async function generateWineListYamlString(data, enoteca) {
 
   const fullYamlString = `${metaDataYamlString}\n\n${winesYamlString}`;
 
-  return fullYamlString;
+  return {
+    fullYamlString: fullYamlString,
+    validRecords: validRecords,
+    warningRecords: warningRecords,
+    invalidRecords: invalidRecords,
+  };
 }
-
-// *  "id"
-// *  "Vino + Annata",
-// !  "Prezzo Vendita Bottiglia (in Carta)",
-// #  (il seguente deve essere true, se è false va tolto il record)
-// *  "Carta dei Vini",
-// !  "Dimensione Bottiglia",
-// !  "IVA d'Acquisto",
-// !  "Ricarico Percentuale",
-// !  "Movimento Vini",
-// !  "Fascia Alcolica",
-// !  "Fascia di Prezzo",
-// !  "IVA di Vendita",
-// !  "Prezzo Vendita Bottiglia - IVA",
-// !  "IVA di Vendita in Euro",
-// !  "Affinamento ENG",
-// !  "Wine Catalog",
-// # il seguente è un altro filtro, il suo valore deve essere uguale al valore enoteca dato come parametro all'inizio dello script
-// !  "Enoteca",
-// !  "Totale Caricati",
-// !  "Totale Scaricati",
-// !  "Giacenza",
-// *  "Vino (from Wine Catalog)",
-// *  "Lista Vitigni AI",
-// *  "Produttore",
-// *  "Alcolicità AI",
-// *  "Affinamento AI",
-// *  "Regione",
-// *  "Zona",
-// *  "Luogo di Produzione",
-// *  "Tipologia",
-// *  "Priorità Zona",
-// !  "Immagine Vino",
-// *  "Prezzo In Carta Testo",
