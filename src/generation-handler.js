@@ -39,9 +39,6 @@ const MENU_DATA_DIR = path.join(PROJECT_ROOT, "data", "menu");
 // Output directory for PDF files
 const PDF_OUTPUT_DIR = path.join(PROJECT_ROOT, "out");
 
-// Attachment field ID for "PDF Carta dei Vini"
-const PDF_ATTACHMENT_FIELD_ID = process.env.AIRTABLE_PDF_FIELD_ID;
-
 // # -------------------------- FUNCTIONS --------------------------
 
 /** Writes data to disk using an atomic, path-traversal-safe strategy.
@@ -332,22 +329,21 @@ export async function writeFileAtomicSafe({
 }
 
 export default async function startGeneration({
-  // TODO: cambiare enoteca dal nome al record id
-  enoteca = "Porgi l'Altra Pancia",
+  enotecaId,
   access_token = process.env.AIRTABLE_API_KEY,
   base_id = process.env.AIRTABLE_BASE_ID,
   table_id = process.env.AIRTABLE_INV_TAB_ID,
   wine_list_tab_id = process.env.AIRTABLE_WINE_LIST_TAB_ID,
   enoteca_table_id = process.env.AIRTABLE_ENO_TAB_ID,
-  out_tab_id,
-  out_record_id,
+  out_tab_id = process.env.AIRTABLE_OUT_TAB_ID,
+  out_field_id = process.env.AIRTABLE_PDF_FIELD_ID,
 }) {
   // # 0. Param Validation
 
-  if (!enoteca) {
+  if (!enotecaId) {
     logger.error("Enoteca is required", {
       location: "src/generation-handler.js:startGeneration",
-      enoteca: enoteca,
+      enoteca: enotecaId,
     });
 
     // TODO: reactivate throw error and delete the default value
@@ -399,10 +395,10 @@ export default async function startGeneration({
     // TODO: reactivate throw error
     // throw new Error("PARAM_ERROR: out tab id is required");
   }
-  if (!out_record_id) {
-    logger.error("Missing out record id, it is required", {
+  if (!out_field_id) {
+    logger.error("Missing out field id, it is required", {
       location: "src/generation-handler.js:startGeneration",
-      out_record_id: out_record_id,
+      out_field_id: out_field_id,
     });
     // TODO: reactivate throw error
     // throw new Error("PARAM_ERROR: out record id is required");
@@ -411,71 +407,20 @@ export default async function startGeneration({
   // Log the parameters validation success
   logger.info("1. Starting generation: parameters validation - Success", {
     location: "src/generation-handler.js:startGeneration",
-    enoteca: enoteca,
+    enoteca: enotecaId,
     access_token: access_token,
     base_id: base_id,
     table_id: table_id,
     out_tab_id: out_tab_id,
-    out_record_id: out_record_id,
+    out_field_id: out_field_id,
   });
 
-  // # 1. Trova il record ID dell'enoteca
-
-  let enotecaRecordId = null;
-  if (enoteca) {
-    try {
-      // Fetch the enoteca record ID from Airtable
-      enotecaRecordId = await findEnotecaRecordId(enoteca, {
-        authToken: access_token,
-        baseId: base_id,
-      });
-
-      // If the enoteca record ID is not found, log an error
-      if (!enotecaRecordId) {
-        logger.error(
-          "Enoteca not found, filtering by name will be skipped - Error finding enoteca record ID",
-          {
-            location: "src/generation-handler.js:startGeneration",
-            enoteca: enoteca,
-            error: "Enoteca not found",
-          }
-        );
-        throw new Error(
-          "ERROR: Enoteca not found, filtering by name will be skipped - Error finding enoteca record ID",
-          {
-            location: "src/generation-handler.js:startGeneration",
-            enoteca: enoteca,
-            error: "Enoteca not found",
-          }
-        );
-      }
-    } catch (error) {
-      // If an error occurs, log an error and throw an error
-      logger.error("Error finding enoteca record ID", {
-        location: "src/generation-handler.js:startGeneration",
-        enoteca: enoteca,
-        error: error,
-      });
-      throw new Error("ERROR: Error finding enoteca record ID", {
-        location: "src/generation-handler.js:startGeneration",
-        enoteca: enoteca,
-        error: error,
-      });
-    }
-  }
-
-  // Log the enoteca record ID found
-  logger.info("2. Enoteca record ID found", {
-    location: "src/generation-handler.js:startGeneration",
-    enotecaRecordId: enotecaRecordId,
-  });
-
-  // # 2. Costruisci il filterByFormula con le condizioni
+  // # 1. Costruisci il filterByFormula con le condizioni
   // Nota: in Airtable un checkbox può essere testato anche come boolean diretto: `{Campo}`
   // (equivalente a `{Campo}=TRUE()` ma più robusto)
   let filterFormula = "{Carta dei Vini}";
 
-  if (enotecaRecordId) {
+  if (enotecaId) {
     // Aggiungi il filtro per Enoteca.
     // Importante: a seconda della base, `{Enoteca}` può essere:
     // - linked record field -> contiene record IDs
@@ -486,7 +431,7 @@ export default async function startGeneration({
     // Se `{Enoteca}` è lookup: ARRAYJOIN({Enoteca}) produce una stringa di nomi.
     const enotecaMatchFormula =
       `OR(` +
-      `FIND("${enotecaRecordId}", ARRAYJOIN({Enoteca}, ",")) > 0, ` +
+      `FIND("${enotecaId}", ARRAYJOIN({Enoteca}, ",")) > 0, ` +
       `FIND("${String(enoteca).replace(
         /"/g,
         '\\"'
@@ -496,7 +441,7 @@ export default async function startGeneration({
     filterFormula = `AND({Carta dei Vini}, ${enotecaMatchFormula})`;
   }
 
-  // # 3. fetch data from Airtable with filter
+  // # 2. fetch data from Airtable with filter
   let data;
   try {
     // try to fetch data from Airtable
@@ -523,14 +468,14 @@ export default async function startGeneration({
   }
 
   // Log the data fetched successfully
-  logger.info("3. Data fetched successfully", {
+  logger.info("2. Data fetched successfully", {
     location: "src/generation-handler.js:startGeneration",
     data_number: data.length,
   });
 
-  // # 4. build payload with middleware (handlebars)
+  // # 3. build payload with middleware (handlebars)
   // get enoteca data (name, logo_url, qr_image_url, digital_menu_url)
-  const rawEnotecaData = await getEnotecaData(enotecaRecordId, {
+  const rawEnotecaData = await getEnotecaData(enotecaId, {
     authToken: access_token,
     baseId: base_id,
     enotecaTableId: enoteca_table_id,
@@ -565,14 +510,14 @@ export default async function startGeneration({
   });
 
   // Log the YAML file saved
-  logger.info("4. YAML file saved", {
+  logger.info("3. YAML file saved", {
     location: "src/generation-handler.js:startGeneration",
     absPath: absPath,
     bytes: bytes,
     yamlFileRealtivePath: yamlFileRealtivePath,
   });
 
-  // # 5. generate and save the document
+  // # 4. generate and save the document
   // Generate PDF document from YAML file
   let pdfPath;
   try {
@@ -580,7 +525,7 @@ export default async function startGeneration({
     pdfPath = await build(absPath, { outputDir: PDF_OUTPUT_DIR });
 
     // Log the PDF generation completed successfully
-    logger.info("5. PDF generation completed successfully", {
+    logger.info("4. PDF generation completed successfully", {
       location: "src/generation-handler.js:startGeneration",
       yamlPath: absPath,
       pdfPath: pdfPath,
@@ -594,7 +539,7 @@ export default async function startGeneration({
     throw error;
   }
 
-  // # 6. save the document to Airtable
+  // # 5. save the document to Airtable
   // Validate required parameters before calling loadWineListToAirtable
   // Final check: try to get access_token from environment if still missing
   if (!access_token) {
@@ -620,12 +565,12 @@ export default async function startGeneration({
       throw new Error("ERROR: wine_list_tab_id is required to save document to Airtable. Please set AIRTABLE_WINE_LIST_TAB_ID environment variable or pass it as parameter");
     }
   }
-  if (!enotecaRecordId) {
-    logger.error("enotecaRecordId is required to save document to Airtable", {
+  if (!enotecaId) {
+    logger.error("enotecaId is required to save document to Airtable", {
       location: "src/generation-handler.js:startGeneration",
-      enotecaRecordId: enotecaRecordId,
+      enotecaId: enotecaId,
     });
-    throw new Error("ERROR: enotecaRecordId is required to save document to Airtable");
+    throw new Error("ERROR: enotecaId is required to save document to Airtable");
   }
 
   try {
@@ -641,7 +586,7 @@ export default async function startGeneration({
       hasAccessToken: !!access_token,
       base_id,
       wine_list_tab_id,
-      enotecaRecordId,
+      enotecaId,
       dateString,
       pdfPath: pdfPath,
     });
@@ -650,13 +595,13 @@ export default async function startGeneration({
       access_token,
       base_id,
       wine_list_tab_id,
-      enotecaRecordId,
+      enotecaId,
       dateObj, // Pass Date object instead of string
-      PDF_ATTACHMENT_FIELD_ID, // Field ID for "PDF Carta dei Vini"
+      out_field_id, // Field ID for "PDF Carta dei Vini"
       pdfPath // Pass PDF path instead of YAML path
     );
 
-    logger.info("6. Document saved to Airtable successfully", {
+    logger.info("5. Document saved to Airtable successfully", {
       location: "src/generation-handler.js:startGeneration",
       result: result,
     });
@@ -711,16 +656,3 @@ if (
       process.exit(1);
     });
 }
-
-// Parametri accettati da startGeneration:
-/*
-{
-    // 'opt' : 'wine_list_generation',
-    // 'enoteca' : 'value',
-    // 'access_token' : 'value',
-    // 'base_id' : 'value',
-    // 'table_id' : 'value',
-    // 'out_tab_id' : 'value',
-    // 'out_record_id' : 'value'
-}
-*/

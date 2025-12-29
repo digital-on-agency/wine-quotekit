@@ -1,9 +1,10 @@
 import express from 'express'
+import { controller as workerController } from './worker.js'
 const app = express()
 const port = 3000
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+    workerController(req, res)
 })
 
 app.listen(port, () => {
