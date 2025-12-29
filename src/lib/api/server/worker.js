@@ -2,7 +2,7 @@ import { logger } from "../../logger/index.js";
 import dotenv from "dotenv";
 import startGeneration from "../../../generation-handler.js";
 
-export async function controller(
+export async function wineListController(
     req,
     res
 ){
@@ -68,7 +68,7 @@ export async function controller(
 
     try {
         // * 1. worker call
-        await worker(
+        await wineListWorker(
             req.enotecaId,
             req.access_token,
             req.base_id,
@@ -86,17 +86,23 @@ export async function controller(
         });
     } catch (error) {
         logger.error("Error during PDF generation", {
-            // TODO: logger parameters
+            error: error,
+            location: "src/lib/api/server/worker.js:wineListController",
+            source: error.source,
         });
         return res.status(500).json({
-            // TODO: need to send other infos
+            success: false, 
+            message: "Error during PDF generation",
+            error: error.message,
+            location: "src/lib/api/server/worker.js:wineListController",
+            source: error.source,
         })
     }
 
 
 }
 
-async function worker(
+async function wineListWorker(
   enotecaId,
   access_token,
   base_id,
@@ -118,7 +124,10 @@ async function worker(
       out_field_id: out_field_id,
     });
   } catch (error) {
-    // TODO: throw more detailed error
-    throw error;
+    throw new Error("ERROR: Error during PDF generation", {
+      location: "src/lib/api/server/worker.js:wineListWorker",
+      source: error.source,
+      error: error,
+    });
   }
 }

@@ -139,7 +139,7 @@ function buildWineListContext(rawData, absData) {
   if (fs.existsSync(categoriesDefPath)) {
     const categoriesDefData = readYaml(categoriesDefPath);
     categoriesDefinitions = categoriesDefData.categories || [];
-  } else {
+  } else { // if categories.yaml is not found, log a warning
     logger.warn(`File categories.yaml not found in ${categoriesDefPath}`, {
       location: "src/build.js:buildWineListContext",
       categoriesDefPath: categoriesDefPath,
