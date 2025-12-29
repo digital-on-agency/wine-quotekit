@@ -772,6 +772,76 @@ export async function createRecord({
   }
 }
 
+/** Updates an **existing record** in an Airtable table.
+ *
+ * This function performs a **partial update** (`PATCH`) on a single Airtable record.
+ * It:
+ * - Validates all required parameters
+ * - Sends only the provided fields to Airtable (no full replacement)
+ * - Supports optional typecasting and field-ID based responses
+ * - Returns the updated record as provided by the Airtable API
+ *
+ * @param {object} params
+ * The configuration object for the update operation.
+ *
+ * @param {string} params.token
+ * The Airtable **Personal Access Token (PAT)** used to authenticate the request.
+ *
+ * @param {string} params.baseId
+ * The Airtable Base ID where the target table resides.
+ *
+ * @param {string} params.tableIdOrName
+ * The table name or table ID containing the record to update.
+ *
+ * @param {string} params.recordId
+ * The unique Airtable record ID identifying the record to update.
+ *
+ * @param {Record<string, unknown>} params.fields
+ * An object containing **only the fields to update**.
+ * Keys must match Airtable field names (or field IDs if
+ * `returnFieldsByFieldId` is enabled).
+ *
+ * @param {boolean} [params.typecast=false]
+ * When set to `true`, Airtable will attempt to coerce provided values
+ * into compatible field types (e.g. strings to select options).
+ *
+ * @param {boolean} [params.returnFieldsByFieldId=false]
+ * When `true`, Airtable returns fields keyed by **field ID**
+ * instead of field name.
+ *
+ * @returns {Promise<unknown>}
+ * A promise that resolves to the **updated record object** as returned
+ * by Airtable (including `id`, `createdTime`, and `fields`).
+ *
+ * @throws {Error}
+ * Throws an error when:
+ * - Any required parameter is missing or invalid
+ * - The Airtable API request fails
+ * - The update operation is rejected by Airtable
+ *
+ * @usage
+ * ```js
+ * const updated = await updateRecord({
+ *   token: process.env.AIRTABLE_TOKEN,
+ *   baseId: "appXXXXXXXXXXXXXX",
+ *   tableIdOrName: "Clients",
+ *   recordId: "recXXXXXXXXXXXXXX",
+ *   fields: {
+ *     Status: "Active",
+ *     LastContacted: "2024-01-10",
+ *   },
+ *   typecast: true,
+ * });
+ *
+ * console.log(updated.fields.Status);
+ * ```
+ *
+ * @notes
+ * - Uses HTTP `PATCH`, so only the provided fields are modified.
+ * - Existing fields not included in `fields` remain untouched.
+ * - Prefer this function over a full replace (`PUT`) to avoid
+ *   accidental data loss.
+ */
 export async function updateRecord({
   token,
   baseId,
@@ -781,25 +851,113 @@ export async function updateRecord({
   typecast = false,
   returnFieldsByFieldId = false,
 }) {
-  if (!baseId) throw new Error("baseId is required");
-  if (!tableIdOrName) throw new Error("tableIdOrName is required");
-  if (!recordId) throw new Error("recordId is required");
+  // * 0. validate parameters
+  if (!baseId)
+    throw new Error({
+      msg: "baseId is required",
+      source: "src/lib/api/airtable/airtableApi.js:updateRecord",
+      baseId: baseId,
+    });
+  if (!tableIdOrName)
+    throw new Error({
+      msg: "tableIdOrName is required",
+      source: "src/lib/api/airtable/airtableApi.js:updateRecord",
+      tableIdOrName: tableIdOrName,
+    });
+  if (!recordId)
+    throw new Error({
+      msg: "recordId is required",
+      source: "src/lib/api/airtable/airtableApi.js:updateRecord",
+      recordId: recordId,
+    });
   if (!fields || typeof fields !== "object") {
-    throw new Error("fields must be an object");
+    throw new Error({
+      msg: "fields must be an object",
+      source: "src/lib/api/airtable/airtableApi.js:updateRecord",
+      fields: fields,
+    });
   }
 
-  return airtableRequest({
-    method: "PATCH",
-    token,
-    path: `/${baseId}/${tableIdOrName}/${recordId}`,
-    body: {
-      fields,
-      typecast,
-      returnFieldsByFieldId,
-    },
-  });
+  // * 1. make the request
+  try {
+    const result = await airtableRequest({
+      method: "PATCH",
+      token,
+      path: `/${baseId}/${tableIdOrName}/${recordId}`,
+      body: {
+        fields,
+        typecast,
+        returnFieldsByFieldId,
+      },
+    });
+
+    return result;
+  } catch (error) {
+    throw new Error({
+      msg: "Error updating record",
+      source: "src/lib/api/airtable/airtableApi.js:updateRecord",
+      cause: error,
+    });
+  }
 }
 
+/** Deletes a **single record** from an Airtable table.
+ *
+ * This function performs a `DELETE` operation against the Airtable API and:
+ * - Validates all required parameters
+ * - Executes the deletion request for the specified record
+ * - Interprets Airtable’s response to confirm whether the record was deleted
+ * - Returns a normalized result object describing the outcome
+ *
+ * @param {object} params
+ * The configuration object for the delete operation.
+ *
+ * @param {string} [params.token=AIRTABLE_AUTH_TOKEN]
+ * The Airtable **Personal Access Token (PAT)** used to authenticate the request.
+ * Defaults to `AIRTABLE_AUTH_TOKEN` if not explicitly provided.
+ *
+ * @param {string} params.baseId
+ * The Airtable Base ID containing the target table.
+ *
+ * @param {string} params.tableIdOrName
+ * The table name or table ID from which the record should be deleted.
+ *
+ * @param {string} params.recordId
+ * The unique Airtable record ID identifying the record to delete.
+ *
+ * @returns {Promise<object>}
+ * A promise that resolves to an object describing the deletion result:
+ * - `success` (`boolean`): Whether the operation succeeded
+ * - `deleted` (`boolean`): Whether the record was actually deleted
+ * - `recordId` (`string`): The ID of the target record
+ * - `message` (`string`): Human-readable status message
+ * - `result` (`object`, optional): Raw Airtable response when deletion fails
+ *
+ * @throws {Error}
+ * Throws an error when:
+ * - Any required parameter is missing or invalid
+ * - The Airtable API request fails
+ * - The deletion operation encounters an unexpected error
+ *
+ * @usage
+ * ```js
+ * const result = await deleteRecord({
+ *   baseId: "appXXXXXXXXXXXXXX",
+ *   tableIdOrName: "Invoices",
+ *   recordId: "recXXXXXXXXXXXXXX",
+ * });
+ *
+ * if (result.deleted) {
+ *   console.log("Record removed:", result.recordId);
+ * }
+ * ```
+ *
+ * @notes
+ * - Uses HTTP `DELETE`; the operation is **irreversible**.
+ * - Airtable returns `{ deleted: true, id: "rec..." }` on success.
+ * - Always validate record ownership/permissions before calling this
+ *   function in production workflows.
+ */
 export async function deleteRecord({
   token = AIRTABLE_AUTH_TOKEN,
   baseId,
@@ -1025,74 +1183,98 @@ export async function findRecordIdByEqualField({
   };
 }
 
-/** Creates a new record in an Airtable table and uploads an attachment file to a specified field.
- * This function combines record creation with file attachment in a single operation.
+/** Creates a **new Airtable record** and then uploads a **single attachment**
+ * into an attachment field using Airtable’s `uploadAttachment` endpoint.
  *
- * @param {Object} params
+ * The flow is intentionally split into two steps:
+ * 1) Create the record **without** the attachment field populated
+ * 2) Upload the file to the record’s attachment field via the content API
+ *
+ * It supports attachments coming from either a local filesystem path or an
+ * HTTP(S) URL. The attachment upload is limited to **5 MB** due to
+ * `uploadAttachment` endpoint constraints.
+ *
+ * @param {object} params
+ * The configuration object for creating the record and uploading the attachment.
+ *
  * @param {string} params.token
- * The Airtable Personal Access Token (PAT) used for authentication.
+ * The Airtable **Personal Access Token (PAT)** used to authenticate requests.
  *
  * @param {string} params.baseId
- * The Airtable Base ID where the record will be created.
+ * The Airtable Base ID containing the target table.
  *
  * @param {string} params.tableIdOrName
- * The table ID or human-readable table name.
+ * The Airtable table name or table ID in which the record will be created.
  *
- * @param {Record<string, any>} params.fields
- * An object containing the field values for the new record.
- * Note: The attachment field should NOT be included in this object,
- * as it will be populated by the file upload.
+ * @param {object} params.fields
+ * A plain object containing the record fields to create (excluding the
+ * attachment field, which is handled separately).
  *
  * @param {string} params.attachmentFieldIdOrName
- * The field ID or name of the attachment field where the file will be uploaded.
+ * The attachment field identifier. Can be either:
+ * - a **field ID** (e.g. `fldXXXXXXXXXXXXXX`) *[recommended]*
+ * - a **field name** (e.g. `"PDF"`)
  *
  * @param {string} params.filePath
- * The local file system path to the file to upload.
+ * The source of the attachment file. Can be either:
+ * - a local path (e.g. `"/tmp/file.pdf"`)
+ * - an HTTP(S) URL (e.g. `"https://example.com/file.pdf"`)
  *
  * @param {string} [params.filename]
- * Optional custom filename. If not provided, the basename of filePath will be used.
+ * Optional override for the attachment filename. If omitted:
+ * - for URLs, the filename is extracted from the URL pathname
+ * - for local paths, the basename of the path is used
  *
  * @param {string} [params.contentType]
- * Optional MIME content type. If not provided, it will be guessed from the file extension.
+ * Optional MIME type override (e.g. `"application/pdf"`). If omitted, the
+ * type is inferred via `guessContentTypeFromFilename()`.
  *
  * @param {boolean} [params.typecast=false]
- * When `true`, Airtable will attempt to coerce field values into compatible types.
+ * Whether Airtable should attempt to coerce values to field types when creating
+ * the record. The current implementation enables typecasting during record
+ * creation to improve compatibility.
  *
  * @param {boolean} [params.returnFieldsByFieldId=false]
- * When `true`, the response will return field values keyed by field ID instead of field name.
+ * Whether the returned record fields should use Airtable field IDs as keys
+ * instead of field names.
  *
- * @returns {Promise<any>}
- * A promise that resolves to the newly created Airtable record with the attachment uploaded.
+ * @returns {Promise<object>}
+ * A promise that resolves to the **verified record** as returned by Airtable
+ * after the attachment is confirmed to exist on the record.
  *
  * @throws {Error}
- * Throws an error if:
- * - required parameters are missing
- * - the file cannot be read or is too large (>5MB)
- * - record creation fails
- * - attachment upload fails
+ * Throws when:
+ * - Any required parameter is missing or invalid
+ * - The file cannot be read or downloaded
+ * - The file exceeds the **5 MB** upload limit for `uploadAttachment`
+ * - Record creation fails or returns no `recordId`
+ * - The attachment upload fails (non-2xx response)
+ * - Post-upload verification cannot confirm the attachment presence
  *
  * @usage
- * ```ts
+ * ```js
  * const record = await uploadRecordWithAttachment({
- *   token: process.env.AIRTABLE_API_KEY,
+ *   token: process.env.AIRTABLE_TOKEN,
  *   baseId: "appXXXXXXXXXXXXXX",
- *   tableIdOrName: "Documents",
- *   fields: {
- *     Name: "My Document",
- *     Description: "A document with an attachment",
- *   },
- *   attachmentFieldIdOrName: "File",
- *   filePath: "/path/to/document.pdf",
- *   filename: "custom-name.pdf",
+ *   tableIdOrName: "Quotes",
+ *   fields: { Name: "Quote #123", Status: "Draft" },
+ *   attachmentFieldIdOrName: "fldXXXXXXXXXXXXXX",
+ *   filePath: "/tmp/quote.pdf",
+ *   filename: "quote-123.pdf",
  * });
  *
- * console.log(record.id);
+ * console.log("Attachment uploaded on record:", record.id);
  * ```
  *
  * @notes
- * - Maximum file size is 5 MB (Airtable limitation).
- * - The record is created first, then the attachment is uploaded to it.
- * - If record creation succeeds but attachment upload fails, the record will still exist in Airtable.
+ * - **Attachment size limit:** this implementation rejects files larger than
+ *   5 MB because the Airtable `uploadAttachment` endpoint enforces that limit.
+ * - **Propagation delays:** short delays are used to reduce 404/race conditions
+ *   right after record creation and attachment upload.
+ * - **Verification:** after upload, the function fetches the record again and
+ *   checks that the attachment field contains at least one item.
+ * - **Field ID vs name:** using a *field ID* is typically more reliable across
+ *   schema changes than using a field name.
  */
 export async function uploadRecordWithAttachment({
   token,
@@ -1109,21 +1291,19 @@ export async function uploadRecordWithAttachment({
   // * 0. Parameter validation
   // token
   if (token === undefined || token === null || token === "") {
-    logger.error("token is required for uploadRecordWithAttachment", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+    throw new Error({
+      msg: "token is required for uploadRecordWithAttachment",
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
       token: token,
     });
-    throw new Error("token is required for uploadRecordWithAttachment");
   }
   // base id
   if (baseId === undefined || baseId === null || baseId === "") {
-    logger.error("baseId is required for uploadRecordWithAttachment", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+    throw new Error({
+      msg: "baseId is required for uploadRecordWithAttachment",
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
       baseId: baseId,
     });
-    throw new Error("baseId is required for uploadRecordWithAttachment");
   }
   // table id or name
   if (
@@ -1131,21 +1311,19 @@ export async function uploadRecordWithAttachment({
     tableIdOrName === null ||
     tableIdOrName === ""
   ) {
-    logger.error("tableIdOrName is required for uploadRecordWithAttachment", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+    throw new Error({
+      msg: "tableIdOrName is required for uploadRecordWithAttachment",
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
       tableIdOrName: tableIdOrName,
     });
-    throw new Error("tableIdOrName is required for uploadRecordWithAttachment");
   }
   // fields
   if (fields === undefined || fields === null || typeof fields !== "object") {
-    logger.error("fields is required for uploadRecordWithAttachment", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+    throw new Error({
+      msg: "fields is required for uploadRecordWithAttachment",
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
       fields: fields,
     });
-    throw new Error("fields is required for uploadRecordWithAttachment");
   }
   // attachment field id or name
   if (
@@ -1153,41 +1331,20 @@ export async function uploadRecordWithAttachment({
     attachmentFieldIdOrName === null ||
     attachmentFieldIdOrName === ""
   ) {
-    logger.error(
-      "attachmentFieldIdOrName is required for uploadRecordWithAttachment",
-      {
-        location:
-          "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-        attachmentFieldIdOrName: attachmentFieldIdOrName,
-      }
-    );
-    throw new Error(
-      "attachmentFieldIdOrName is required for uploadRecordWithAttachment"
-    );
+    throw new Error({
+      msg: "attachmentFieldIdOrName is required for uploadRecordWithAttachment",
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      attachmentFieldIdOrName: attachmentFieldIdOrName,
+    });
   }
   // file path
   if (filePath === undefined || filePath === null || filePath === "") {
-    logger.error("filePath is required for uploadRecordWithAttachment", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+    throw new Error({
+      msg: "filePath is required for uploadRecordWithAttachment",
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
       filePath: filePath,
     });
-    throw new Error("filePath is required for uploadRecordWithAttachment");
   }
-
-  // TODO: remove after testing
-  logger.info(
-    " ####DEBUG#### uploadRecordWithAttachment parameters validation - Success",
-    {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-      token,
-      baseId,
-      tableIdOrName,
-      fields,
-      attachmentFieldIdOrName,
-    }
-  );
 
   // * 1. Read the file (from filesystem or download from URL)
   // Check if filePath is already a URL (starts with http:// or https://)
@@ -1202,9 +1359,12 @@ export async function uploadRecordWithAttachment({
 
     const response = await fetch(filePath);
     if (!response.ok) {
-      throw new Error(
-        `Failed to download file from URL: ${response.status} ${response.statusText}`
-      );
+      throw new Error({
+        msg: `Failed to download file from URL: ${response.status} ${response.statusText}`,
+        source:
+          "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+        response: response,
+      });
     }
     const arrayBuffer = await response.arrayBuffer();
     fileBuf = Buffer.from(arrayBuffer);
@@ -1230,9 +1390,12 @@ export async function uploadRecordWithAttachment({
   const MAX = 5 * 1024 * 1024; // 5 MB
 
   if (sizeBytes > MAX) {
-    throw new Error(
-      `File too large for uploadAttachment endpoint: ${sizeBytes} bytes. Max is ${MAX} bytes (5 MB).`
-    );
+    throw new Error({
+      msg: `File too large for uploadAttachment endpoint: ${sizeBytes} bytes. Max is ${MAX} bytes (5 MB).`,
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      sizeBytes: sizeBytes,
+      MAX: MAX,
+    });
   }
 
   // Final MIME type:
@@ -1240,12 +1403,6 @@ export async function uploadRecordWithAttachment({
   // - guess from file extension
   const finalContentType =
     contentType || guessContentTypeFromFilename(finalFilename);
-
-  // TODO: remove after testing
-  logger.info(" ####DEBUG#### finalContentType", {
-    location: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-    finalContentType,
-  });
 
   // * 2. Create the record first (without the attachment field)
   // Remove attachment field from fields if present to avoid conflicts
@@ -1265,54 +1422,29 @@ export async function uploadRecordWithAttachment({
     });
   } catch (error) {
     // This catch block handles the situation where creating the record in Airtable fails, logging detailed error information and stopping the process to prevent further execution.
-    logger.error("Error creating record for uploadRecordWithAttachment", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-      error: error.message,
-      baseId,
-      tableIdOrName,
-      fields: JSON.stringify(fields, null, 2),
-      originalError: error,
-      status: error.status,
-      statusText: error.statusText,
-      airtableError: error.airtable,
+    throw new Error({
+      msg: "Error creating record for uploadRecordWithAttachment",
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      error: error,
+      baseId: baseId,
+      tableIdOrName: tableIdOrName,
+      fields: fieldsWithoutAttachment,
+      token: token,
     });
-
-    // Provide helpful error message based on status code
-    let errorMessage = `Error creating record for uploadRecordWithAttachment: ${error.message}`;
-    if (error.status === 403) {
-      errorMessage += `\n\nPossible causes:
-- The token does not have write permissions for table "${tableIdOrName}" in base "${baseId}"
-- The table "${tableIdOrName}" does not exist in base "${baseId}"
-- Field names in the payload do not match the table schema
-- The token is invalid or expired
-
-Please verify:
-1. Token permissions in Airtable (Account > Personal access tokens)
-2. Table ID/name is correct: "${tableIdOrName}"
-3. Base ID is correct: "${baseId}"
-4. Field names match exactly: ${Object.keys(fields).join(", ")}`;
-    }
-
-    // Preserve the original error and add context
-    const enhancedError = new Error(errorMessage);
-    enhancedError.cause = error;
-    enhancedError.location =
-      "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment";
-    enhancedError.baseId = baseId;
-    enhancedError.tableIdOrName = tableIdOrName;
-    enhancedError.originalMessage = error.message;
-    enhancedError.fields = fields;
-    if (error.status) enhancedError.status = error.status;
-    if (error.statusText) enhancedError.statusText = error.statusText;
-    if (error.airtable) enhancedError.airtable = error.airtable;
-    throw enhancedError;
   }
 
   // Extract the record ID from the created record
   const recordId = newRecord.id;
   if (!recordId) {
-    throw new Error("Failed to create record: no record ID returned");
+    throw new Error({
+      msg: "Failed to create record: no record ID returned",
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      recordId: recordId,
+      baseId: baseId,
+      tableIdOrName: tableIdOrName,
+      fields: fieldsWithoutAttachment,
+      token: token,
+    });
   }
 
   // Small delay to ensure record is fully propagated in Airtable. This helps avoid 404 errors when trying to upload attachment immediately after creation
@@ -1334,44 +1466,16 @@ Please verify:
       recordId,
       returnFieldsByFieldId: true, // Always use field IDs to get complete field list
     });
-
-    // TODO: remove after testing
-    logger.info(" ####DEBUG#### verifyRecord AFTER getRecord", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-      verifyRecord,
-      hasFields: !!verifyRecord?.fields,
-      fieldKeys: verifyRecord?.fields ? Object.keys(verifyRecord.fields) : [],
-      recordId,
-      attachmentFieldIdOrName,
-      isFieldId: useFieldId,
-      note: "Fields are returned by ID. Empty fields (like attachment) won't appear in response.",
-    });
   } catch (verifyError) {
     // This catch block handles the situation where verifying the existence of the newly created Airtable record fails, logging detailed error information and stopping the process to prevent attachment upload to a non-existent record.
-    // TODO: remove after testing
-    logger.error(" ####DEBUG#### verifyError in catch", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-      verifyError: verifyError,
-      errorMessage: verifyError.message,
-      errorStack: verifyError.stack,
-      status: verifyError.status,
-      statusText: verifyError.statusText,
-      recordId,
-    });
-
-    logger.error("Failed to verify record existence", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-      recordId,
+    throw new Error({
+      msg: `Cannot proceed with attachment upload: Record ${recordId} does not exist or cannot be accessed. Error: ${verifyError.message}`,
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      recordId: recordId,
       error: verifyError.message,
       status: verifyError.status,
       statusText: verifyError.statusText,
     });
-    throw new Error(
-      `Cannot proceed with attachment upload: Record ${recordId} does not exist or cannot be accessed. Error: ${verifyError.message}`
-    );
   }
 
   // Diagnostic: Check if the attachment field exists in the record
@@ -1389,12 +1493,6 @@ Please verify:
     }
   }
 
-  // TODO: remove after testing
-  logger.info(" ####DEBUG#### verifyRecord.fields", {
-    location: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-    verifyRecordFields: verifyRecord.fields,
-  });
-
   // * 3. Upload attachment using Airtable's uploadAttachment endpoint
   // According to Airtable API documentation:
   // POST /v0/{baseId}/{recordId}/{attachmentFieldIdOrName}/uploadAttachment
@@ -1409,20 +1507,6 @@ Please verify:
 
   // Build the upload URL
   const uploadUrl = `${AIRTABLE_CONTENT_BASE}/${baseId}/${recordId}/${attachmentFieldIdOrName}/uploadAttachment`;
-
-  // TODO: remove after testing
-  logger.info(" ####DEBUG#### About to upload attachment", {
-    location: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-    uploadUrl,
-    recordId,
-    attachmentFieldIdOrName,
-    isFieldId: attachmentFieldIdOrName.startsWith("fld"),
-    baseId,
-    tableIdOrName,
-    fileSize: fileBuf.byteLength,
-    filename: finalFilename,
-    contentType: finalContentType,
-  });
 
   try {
     // Make the POST request to uploadAttachment endpoint
@@ -1439,18 +1523,7 @@ Please verify:
       }),
     });
 
-    // TODO: remove after testing
-    logger.info(" ####DEBUG#### uploadResponse", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-      uploadResponseStatus: uploadResponse.status,
-      uploadResponseStatusText: uploadResponse.statusText,
-      uploadResponseOk: uploadResponse.ok,
-      uploadResponseHeaders: Object.fromEntries(
-        uploadResponse.headers.entries()
-      ),
-    });
-
+    // if the upload response is not ok, throw an error
     if (!uploadResponse.ok) {
       const responseText = await uploadResponse.text();
       let responseJson;
@@ -1460,66 +1533,30 @@ Please verify:
         responseJson = { error: responseText };
       }
 
-      logger.error("Airtable uploadAttachment response", {
-        location:
+      throw new Error({
+        msg: `Airtable uploadAttachment failed: ${uploadResponse.status} ${
+          uploadResponse.statusText
+        }. ${JSON.stringify(responseJson)}`,
+        source:
           "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
         status: uploadResponse.status,
         statusText: uploadResponse.statusText,
         url: uploadUrl,
-        responseText,
-        responseJson,
-        attachmentFieldIdOrName,
+        responseText: responseText,
+        responseJson: responseJson,
+        attachmentFieldIdOrName: attachmentFieldIdOrName,
         isFieldId: attachmentFieldIdOrName.startsWith("fld"),
       });
-
-      // Provide helpful error message for 404 errors
-      let errorMessage = `Airtable uploadAttachment failed: ${
-        uploadResponse.status
-      } ${uploadResponse.statusText}. ${JSON.stringify(responseJson)}`;
-
-      if (
-        uploadResponse.status === 404 &&
-        !attachmentFieldIdOrName.startsWith("fld")
-      ) {
-        errorMessage +=
-          `\n\nIMPORTANT: The uploadAttachment endpoint may require the field ID instead of the field name.\n` +
-          `You provided: "${attachmentFieldIdOrName}" (field name)\n` +
-          `Try using the field ID instead (starts with "fld", e.g., "fldzJAZ8ffCr4NMLO").\n` +
-          `You can find the field ID in Airtable's API documentation or by inspecting the table schema.`;
-      } else if (uploadResponse.status === 404) {
-        errorMessage +=
-          `\n\nPossible causes:\n` +
-          `- The field ID "${attachmentFieldIdOrName}" does not exist in table "${tableIdOrName}"\n` +
-          `- The field is not an attachment field\n` +
-          `- The record "${recordId}" does not exist or is not accessible\n` +
-          `- The base "${baseId}" or table "${tableIdOrName}" is incorrect`;
-      }
-
-      throw new Error(errorMessage);
     }
 
     const uploadResult = await uploadResponse.json();
-
-    // TODO: remove after testing
-    logger.info(" ####DEBUG#### uploadResult", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-      uploadResult,
-    });
-
-    // TODO: keeo or not?
-    // logger.info("Attachment uploaded successfully via uploadAttachment endpoint", {
-    //   location: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-    //   recordId,
-    //   attachmentFieldIdOrName,
-    //   filename: finalFilename,
-    //   uploadResult,
-    // });
 
     // * 4. Verify the attachment was added
     // Small delay to ensure attachment is fully propagated in Airtable
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    // this block attempts to verify the attachment was added
+    // verify the attachment was added
     const verifyRecord = await getRecord({
       token,
       baseId,
@@ -1528,10 +1565,13 @@ Please verify:
       returnFieldsByFieldId: useFieldId,
     });
 
+    // get the attachment field
     const attachmentField = verifyRecord.fields?.[attachmentFieldIdOrName];
+    // check if the attachment field has a value
     const hasAttachment =
       Array.isArray(attachmentField) && attachmentField.length > 0;
 
+    // if the attachment field does not have a value, throw an error
     if (!hasAttachment) {
       const fieldStatus =
         attachmentField === undefined
@@ -1540,9 +1580,16 @@ Please verify:
           ? `Field "${attachmentFieldIdOrName}" exists but is empty`
           : `Field "${attachmentFieldIdOrName}" has unexpected type: ${typeof attachmentField}`;
 
-      const errorMsg = `Attachment verification failed: The file "${finalFilename}" was not found in field "${attachmentFieldIdOrName}" after uploadAttachment. ${fieldStatus}`;
-
-      logger.error("Attachment verification failed", {
+      throw new Error({
+        msg: `Attachment verification failed: The file "${finalFilename}" was not found in field "${attachmentFieldIdOrName}" after uploadAttachment. ${fieldStatus}`,
+        source:
+          "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+        recordId: recordId,
+        attachmentFieldIdOrName: attachmentFieldIdOrName,
+        filename: finalFilename,
+        attachmentFieldValue: attachmentField,
+        availableFields: Object.keys(verifyRecord.fields || {}),
+        fieldStatus: fieldStatus,
         location:
           "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
         recordId,
@@ -1552,55 +1599,19 @@ Please verify:
         availableFields: Object.keys(verifyRecord.fields || {}),
         fieldStatus,
       });
-
-      const err = new Error(errorMsg);
-      err.status = 500;
-      err.recordId = recordId;
-      err.attachmentFieldIdOrName = attachmentFieldIdOrName;
-      err.filename = finalFilename;
-      err.attachmentFieldValue = attachmentField;
-      err.availableFields = Object.keys(verifyRecord.fields || {});
-      throw err;
     }
-
-    // TODO: keeo or not?
-    // logger.info("Attachment verified successfully", {
-    //   location: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-    //   recordId,
-    //   attachmentFieldIdOrName,
-    //   attachmentCount: attachmentField.length,
-    //   attachmentFiles: attachmentField.map((f) => f.filename || f.url),
-    // });
 
     return verifyRecord;
   } catch (error) {
-    logger.error("Error updating record with attachment", {
-      location:
-        "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
-      recordId,
-      attachmentFieldIdOrName,
+    throw new Error({
+      msg: `Error updating record with attachment: ${error.message}`,
+      source: "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment",
+      recordId: recordId,
+      attachmentFieldIdOrName: attachmentFieldIdOrName,
       filename: finalFilename,
       error: error.message,
       status: error.status,
       statusText: error.statusText,
-      airtableError: error.airtable,
     });
-
-    // Preserve the original error and add context
-    const enhancedError = new Error(
-      `Error updating record with attachment: ${
-        error.message || "Unknown error"
-      }`
-    );
-    enhancedError.cause = error;
-    enhancedError.location =
-      "src/lib/api/airtable/airtableApi.js:uploadRecordWithAttachment";
-    enhancedError.recordId = recordId;
-    enhancedError.attachmentFieldIdOrName = attachmentFieldIdOrName;
-    enhancedError.filename = finalFilename;
-    if (error.status) enhancedError.status = error.status;
-    if (error.statusText) enhancedError.statusText = error.statusText;
-    if (error.airtable) enhancedError.airtable = error.airtable;
-    throw enhancedError;
   }
 }

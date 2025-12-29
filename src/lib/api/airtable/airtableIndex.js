@@ -23,58 +23,6 @@ const {
   AIRTABLE_ENO_TAB_ID,
 } = process.env;
 
-/** Fetches **all** records from a default Airtable table, automatically handling
- * Airtable pagination (`offset`) and returning a single aggregated result.
- *
- * This helper is optimized for a “default base/table” setup:
- * - Uses environment-configured values (`AIRTABLE_AUTH_TOKEN`, `AIRTABLE_BASE_ID`, `AIRTABLE_INV_  TAB_ID`)
- * - Allows overrides via the second argument
- * - Logs progress per page and a final completion summary
- *
- * @param {Record<string, any>} [params={}]
- * Airtable list/query parameters forwarded to `listRecords`, such as:
- * - `filterByFormula`
- * - `view`
- * - `fields[]`
- * - `sort[]`
- * - `pageSize` (defaults to 100 if not provided)
- *
- * @param {Object} [options={}]
- * Optional overrides for the default Airtable configuration.
- *
- * @param {string} [options.authToken=AIRTABLE_AUTH_TOKEN]
- * Airtable Personal Access Token (PAT) used for authentication.
- *
- * @param {string} [options.baseId=AIRTABLE_BASE_ID]
- * The Airtable Base ID containing the default table.
- *
- * @param {string} [options.tableIdOrName=AIRTABLE_INV_TAB_ID]
- * The table ID or table name used as the default target.
- *
- * @returns {Promise<{ records: any[] }>}
- * A promise that resolves to an object containing all fetched records:
- * `{ records: [...] }`.
- *
- * @throws {Error}
- * Throws an error if any required configuration is missing:
- * - `AIRTABLE_AUTH_TOKEN` (or override)
- * - `AIRTABLE_BASE_ID` (or override)
- * - `AIRTABLE_INV_TAB_ID` (or override)
- *
- * @usage
- * ```ts
- * const { records } = await fetchDefaultTableRecords(
- *   { filterByFormula: "{in_carta_vini}=TRUE()", pageSize: 100 },
- *   { baseId: "appXXXXXXXXXXXXXX", tableIdOrName: "Wines" }
- * );
- * ```
- *
- * @notes
- * - Pagination is handled by repeatedly calling `listRecords` until no `offset` is returned.
- * - Each page fetch is logged with counts and metadata for debugging/monitoring.
- * - The returned structure intentionally mirrors Airtable’s `{ records: [...] }` shape
- *   to remain compatible with existing code.
- */
 export async function fetchDefaultTableRecords(
   params = {},
   {
@@ -84,28 +32,25 @@ export async function fetchDefaultTableRecords(
   } = {}
 ) {
   if (!authToken) {
-    logger.error("AIRTABLE_AUTH_TOKEN (env or override) is required", {
-      error: new Error("AIRTABLE_AUTH_TOKEN (env or override) is required"),
-      location:
-        "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+    throw new Error({
+      msg: "AIRTABLE_AUTH_TOKEN (env or override) is required",
+      source: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+      authToken: authToken,
     });
-    throw new Error("AIRTABLE_AUTH_TOKEN (env or override) is required");
   }
   if (!baseId) {
-    logger.error("AIRTABLE_BASE_ID (env or override) is required", {
-      error: new Error("AIRTABLE_BASE_ID (env or override) is required"),
-      location:
-        "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+    throw new Error({
+      msg: "AIRTABLE_BASE_ID (env or override) is required",
+      source: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+      baseId: baseId,
     });
-    throw new Error("AIRTABLE_BASE_ID (env or override) is required");
   }
   if (!tableIdOrName) {
-    logger.error("AIRTABLE_INV_TAB_ID (env or override) is required", {
-      error: new Error("AIRTABLE_INV_TAB_ID (env or override) is required"),
-      location:
-        "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+    throw new Error({
+      msg: "AIRTABLE_INV_TAB_ID (env or override) is required",
+      source: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+      tableIdOrName: tableIdOrName,
     });
-    throw new Error("AIRTABLE_INV_TAB_ID (env or override) is required");
   }
 
   // Accumula tutti i record attraverso la paginazione
@@ -113,31 +58,41 @@ export async function fetchDefaultTableRecords(
   let offset = null;
   let pageCount = 0;
 
-  do {
-    // Prepara i parametri per questa richiesta
-    const requestParams = { ...params };
-    if (offset) {
-      requestParams.offset = offset;
-    }
-    // Assicurati che pageSize sia impostato (default 100, max 100)
-    if (!requestParams.pageSize) {
-      requestParams.pageSize = 100;
-    }
+  try {
+    do {
+      // Prepara i parametri per questa richiesta
+      const requestParams = { ...params };
+      if (offset) {
+        requestParams.offset = offset;
+      }
+      // Assicurati che pageSize sia impostato (default 100, max 100)
+      if (!requestParams.pageSize) {
+        requestParams.pageSize = 100;
+      }
 
-    const result = await listRecords({
-      token: authToken,
-      baseId,
-      tableIdOrName,
-      params: requestParams,
+      const result = await listRecords({
+        token: authToken,
+        baseId,
+        tableIdOrName,
+        params: requestParams,
+      });
+
+      // Accumula i record di questa pagina
+      allRecords.push(...(result.records || []));
+      pageCount++;
+
+      // Controlla se c'è un offset per la prossima pagina
+      offset = result.offset || null;
+    } while (offset);
+  } catch (error) {
+    throw new Error({
+      msg: "Error fetching default table records",
+      source: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
+      error: error.message,
+      status: error.status,
+      statusText: error.statusText,
     });
-
-    // Accumula i record di questa pagina
-    allRecords.push(...(result.records || []));
-    pageCount++;
-
-    // Controlla se c'è un offset per la prossima pagina
-    offset = result.offset || null;
-  } while (offset);
+  }
 
   // Costruisci un risultato compatibile con la struttura originale
   const finalResult = {
@@ -146,55 +101,7 @@ export async function fetchDefaultTableRecords(
 
   return finalResult;
 }
-
-/** Finds and returns the Airtable **record ID** of an *enoteca* by matching its name.
- *
- * This utility queries the configured Airtable table (defaults to `AIRTABLE_ENO_TAB_ID`)
- * and attempts to resolve the record whose `{Nome}` (or the configured `nameField`)
- * equals the provided `enotecaName`.
- *
- * @param {string} enotecaName
- * The *enoteca* name to search for (must match the Airtable field value).
- *
- * @param {Object} [options]
- * Optional configuration overrides.
- *
- * @param {string} [options.authToken=AIRTABLE_AUTH_TOKEN]
- * Airtable **Personal Access Token (PAT)** used to authenticate the request.
- *
- * @param {string} [options.baseId=AIRTABLE_BASE_ID]
- * The Airtable base ID containing the enoteca table.
- *
- * @param {string} [options.enotecaTableId=AIRTABLE_ENO_TAB_ID]
- * The Airtable table ID or table name where enoteca records are stored.
- *
- * @param {string} [options.nameField="Nome"]
- * The Airtable field name used for matching the enoteca name.
- *
- * @returns {Promise<string | null>}
- * A promise that resolves to the matching Airtable record ID, or `null` if `enotecaName`
- * is missing or no record is found.
- *
- * @throws {Error}
- * Throws when required Airtable configuration is missing (`authToken`, `baseId`, or `enotecaTableId`)
- * or when the underlying Airtable request fails.
- *
- * @usage
- * ```ts
- * const recordId = await findEnotecaRecordId("Enoteca Rossi");
- * if (!recordId) {
- *   console.log("Not found");
- * } else {
- *   console.log("Found:", recordId);
- * }
- * ```
- *
- * @notes
- * - The function logs a *warning* and returns `null` if `enotecaName` is falsy.
- * - Name values are escaped to be safely used in Airtable formulas (single quotes are doubled).
- * - The implementation may use `filterByFormula` for server-side filtering (recommended),
- *   or fall back to client-side scanning depending on how `listRecords` is invoked.
- */
+  
 export async function findEnotecaRecordId(
   enotecaName,
   {
@@ -529,14 +436,17 @@ export async function loadWineListToAirtable(
   }
 
   // TODO: remove after testing
-  logger.info(" ####DEBUG#### loadWineListToAirtable parameters validation - Success", {
-    location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
-    token,
-    baseId,
-    tableIdOrName,
-    enoteca_id,
-    data,
-  });
+  logger.info(
+    " ####DEBUG#### loadWineListToAirtable parameters validation - Success",
+    {
+      location: "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable",
+      token,
+      baseId,
+      tableIdOrName,
+      enoteca_id,
+      data,
+    }
+  );
 
   // * 1. Prepare the date for "Carta dei Vini" field (DD-MM-YYYY format)
   // Parse the data parameter - it can be a Date object, ISO string, or formatted string
@@ -565,8 +475,9 @@ export async function loadWineListToAirtable(
 
   // * 2. Prepare the fields payload
   // Format date for Airtable: use ISO 8601 format (YYYY-MM-DDTHH:mm:ss.sssZ), Airtable accepts ISO 8601 strings for date fields
-  const airtableDate = data instanceof Date ? data.toISOString() : new Date(data).toISOString();
-  
+  const airtableDate =
+    data instanceof Date ? data.toISOString() : new Date(data).toISOString();
+
   // Note: "Carta dei Vini" is a computed/linked field that cannot be set directly, it will be populated automatically by Airtable based on the linked record
   const fields = {
     Enoteca: [enoteca_id], // Airtable link field expects an array of record IDs
@@ -604,10 +515,13 @@ export async function loadWineListToAirtable(
   } catch (error) {
     // Preserve the original error and add context
     const enhancedError = new Error(
-      `Error uploading wine list to Airtable: ${error.message || error.originalMessage || "Unknown error"}`
+      `Error uploading wine list to Airtable: ${
+        error.message || error.originalMessage || "Unknown error"
+      }`
     );
     enhancedError.cause = error;
-    enhancedError.location = "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable";
+    enhancedError.location =
+      "src/lib/api/airtable/airtableIndex.js:loadWineListToAirtable";
     enhancedError.originalLocation = error.location || error.originalLocation;
     enhancedError.originalMessage = error.message || error.originalMessage;
     enhancedError.baseId = baseId;
