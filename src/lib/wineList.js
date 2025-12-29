@@ -5,11 +5,14 @@ import { logger } from "./logger/index.js";
 import dotenv from "dotenv";
 dotenv.config();
 const { AIRTABLE_AUTH_TOKEN, AIRTABLE_BASE_ID, AIRTABLE_ZONE_TAB_ID } =
-process.env;
+  process.env;
 // yaml: library for YAML serialization
 import yaml from "js-yaml";
 // airtable api
-import { fetchDefaultTableRecords, getEnotecaDataById } from "./api/airtable/airtableIndex.js";
+import {
+  fetchDefaultTableRecords,
+  getEnotecaDataById,
+} from "./api/airtable/airtableIndex.js";
 
 // # -------------------------- FUNCTIONS --------------------------
 
@@ -94,87 +97,67 @@ export function wineDataCleaner(data) {
   return cleanedRecords;
 }
 
-/** Builds a zone metadata mapping from Airtable zones records.
- *
- * This function fetches all records from the configured **Zones** table and
- * transforms them into a dictionary keyed by Airtable record ID, containing
- * normalized zone attributes (name, region, country, priority).
- *
- * The resulting mapping is typically used to support **priority-based sorting**
- * and richer rendering (e.g. resolving zone names from linked-record IDs).
- *
- * @returns {Promise<Record<string, { id: string; name: unknown; region: unknown; country: unknown; priority: unknown }>>}
- * A promise that resolves to an object where:
- * - keys are zone Airtable record IDs
- * - values contain zone metadata (`id`, `name`, `region`, `country`, `priority`)
- *
- * @throws {Error}
- * Propagates any error thrown by `fetchDefaultTableRecords` (e.g. network/auth/config issues).
- *
- * @usage
- * ```ts
- * const zoneMapping = await getZoneMapping();
- * const zone = zoneMapping["recXXXXXXXXXXXXXX"];
- * console.log(zone?.name, zone?.priority);
- * ```
- *
- * @notes
- * - Records without an `id` are skipped and logged as warnings.
- * - Field names are normalized with fallbacks to tolerate schema variations
- *   (e.g. `"Nome Zona"` → `"Zona"` → `"Nome"`).
- * - Includes a debug/info log with mapping stats and a sample entry
- *   (intended for removal after testing).
- */
 export async function getZoneMapping() {
   // Fetch zones data from Airtable
-  const zonesData = await fetchDefaultTableRecords(
-    {},
-    {
-      authToken: AIRTABLE_AUTH_TOKEN,
-      baseId: AIRTABLE_BASE_ID,
-      tableIdOrName: AIRTABLE_ZONE_TAB_ID,
+  try {
+    const zonesData = await fetchDefaultTableRecords(
+      {},
+      {
+        authToken: AIRTABLE_AUTH_TOKEN,
+        baseId: AIRTABLE_BASE_ID,
+        tableIdOrName: AIRTABLE_ZONE_TAB_ID,
+      }
+    );
+
+    // get records from zones data
+    const records = Array.isArray(zonesData?.records) ? zonesData.records : [];
+
+    const zoneMapping = {};
+    // build zone mapping
+    for (const rec of records) {
+      // get id from record
+      const id = rec?.id;
+      // if id is not present, continue
+      if (!id) {
+        logger.warning("Zone ID not found when building zone mapping", {
+          location: "src/lib/wineList.js:getZoneMapping",
+          record: rec,
+        });
+        continue;
+      }
+
+      // get fields from record
+      const fields =
+        rec?.fields && typeof rec.fields === "object" ? rec.fields : {};
+
+      // get name, region, country, priority from fields
+      const name =
+        fields["Nome Zona"] ?? fields["Zona"] ?? fields["Nome"] ?? null;
+      const region = fields["Regione"] ?? null;
+      const country = fields["Nazione"] ?? null;
+      const priority =
+        fields["Priorità Zone"] ?? fields["Priorità Zona"] ?? null;
+
+      // add zone mapping to zoneMapping
+      zoneMapping[id] = {
+        id,
+        name,
+        region,
+        country,
+        priority,
+      };
     }
-  );
 
-  // get records from zones data
-  const records = Array.isArray(zonesData?.records) ? zonesData.records : [];
-
-  const zoneMapping = {};
-  // build zone mapping
-  for (const rec of records) {
-    // get id from record
-    const id = rec?.id;
-    // if id is not present, continue
-    if (!id) {
-      logger.warning("Zone ID not found", {
-        location: "src/lib/wineList.js:getZoneMapping",
-        record: rec,
-      });
-      continue;
-    }
-
-    // get fields from record
-    const fields =
-      rec?.fields && typeof rec.fields === "object" ? rec.fields : {};
-
-    // get name, region, country, priority from fields
-    const name =
-      fields["Nome Zona"] ?? fields["Zona"] ?? fields["Nome"] ?? null;
-    const region = fields["Regione"] ?? null;
-    const country = fields["Nazione"] ?? null;
-    const priority = fields["Priorità Zone"] ?? fields["Priorità Zona"] ?? null;
-
-    // add zone mapping to zoneMapping
-    zoneMapping[id] = {
-      id,
-      name,
-      region,
-      country,
-      priority,
-    };
+    return zoneMapping;
+  } catch (error) {
+    throw new Error({
+      msg: "Error getting zone mapping",
+      source: "src/lib/wineList.js:getZoneMapping",
+      error: error.message,
+      status: error.status,
+      statusText: error.statusText,
+    });
   }
-
-  return zoneMapping;
 }
 
 /** Sorts an array of Airtable wine records into a deterministic, menu-friendly order.
@@ -555,7 +538,9 @@ export async function wineDataValidationAndNormalization(data, zoneMapping) {
     } else {
       // currentRecord.producer = record.fields["Produttore"];
       try {
-        const producerData = await getEnotecaDataById(record.fields["Produttore"]);
+        const producerData = await getEnotecaDataById(
+          record.fields["Produttore"]
+        );
         currentRecord.producer = producerData.fields["Nome"];
       } catch (error) {
         invalidFields.push("Produttore");
@@ -929,7 +914,7 @@ export function wineDataYamlBuilder(data) {
  * - Zone mapping is fetched asynchronously and used both for sorting
  *   and for resolving human-readable zone names.
  * - This function does not perform I/O operations (file writing).
-*/
+ */
 export default async function generateWineListYamlString(data, enoteca) {
   // # 0. Data Cleaning
   // clean data from unused columns and filter by 'Carta dei vini' and 'Enoteca'
