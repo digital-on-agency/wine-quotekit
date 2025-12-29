@@ -393,11 +393,6 @@ export async function build(
   fs.writeFileSync(htmlPath, html, "utf8");
 
   if (onlyHtml) {
-    // TODO: keeo or not?
-    // logger.info(`HTML pronto: ${htmlPath}`, {
-    //   location: "src/build.js:build",
-    //   htmlPath: htmlPath,
-    // });
     return htmlPath;
   }
 
@@ -418,12 +413,6 @@ export async function build(
   });
   // Close the browser
   await browser.close();
-
-  // TODO: keeo or not?
-  // logger.info(`PDF pronto: ${pdfPath}`, {
-  //   location: "src/build.js:build",
-  //   pdfPath: pdfPath,
-  // });
 
   // Return the PDF path so callers can use it
   return pdfPath;

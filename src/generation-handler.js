@@ -359,12 +359,18 @@ export default async function startGeneration({
       }
     );
     // Try both possible environment variable names
-    access_token = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_AUTH_TOKEN;
+    access_token =
+      process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_AUTH_TOKEN;
     if (!access_token) {
-      logger.error("No access token found in environment variables (AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN)", {
-        location: "src/generation-handler.js:startGeneration",
-      });
-      throw new Error("ERROR: access_token is required. Please set AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN environment variable");
+      logger.error(
+        "No access token found in environment variables (AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN)",
+        {
+          location: "src/generation-handler.js:startGeneration",
+        }
+      );
+      throw new Error(
+        "ERROR: access_token is required. Please set AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN environment variable"
+      );
     }
   }
   if (!base_id) {
@@ -455,72 +461,61 @@ export default async function startGeneration({
         tableIdOrName: table_id,
       }
     );
-  } catch (error) {
-    // if error, log and throw
-    logger.error("Error fetching data from Airtable", {
+
+    // Log the data fetched successfully
+    logger.info("2. Data fetched successfully", {
       location: "src/generation-handler.js:startGeneration",
-      error: error,
+      data_number: data.length,
     });
-    throw new Error("ERROR: Error fetching data from Airtable", {
+
+    // # 3. build payload with middleware (handlebars)
+    // get enoteca data (name, logo_url, qr_image_url, digital_menu_url)
+    const rawEnotecaData = await getEnotecaData(enotecaId, {
+      authToken: access_token,
+      baseId: base_id,
+      enotecaTableId: enoteca_table_id,
+    });
+
+    // build enoteca data
+    const enotecaData = {
+      id: rawEnotecaData.fields["Nome"].toLowerCase().replace(/ /g, "-"),
+      name: rawEnotecaData.fields["Nome"],
+      description: rawEnotecaData.fields["Introduzione"],
+      logo_url: rawEnotecaData.fields["Logo"][0].url,
+      qr_image_url: rawEnotecaData.fields["QR Code"][0].url,
+      digital_menu_url: rawEnotecaData.fields["URL Menu Digitale"],
+    };
+
+    const today = new Date();
+    const dateString = today.toISOString().slice(0, 10); // YYYY-MM-DD
+    const fileName = `${dateString} - Carta dei Vini - ${enotecaData.id}.yaml`;
+
+    // Get YAML string for wine list, restaurant and meta data
+    const yamlString = await generateWineListYamlString(data, enotecaData);
+
+    // Save YAML string to file
+    const yamlFileRealtivePath = path.join(enotecaData.id, fileName);
+
+    const { absPath, bytes } = await writeFileAtomicSafe({
+      baseDir: MENU_DATA_DIR,
+      relativePath: yamlFileRealtivePath,
+      data: yamlString,
+      overwrite: true,
+      mode: 0o644,
+    });
+
+    // Log the YAML file saved
+    logger.info("3. YAML file saved", {
       location: "src/generation-handler.js:startGeneration",
-      error: error,
+      absPath: absPath,
+      bytes: bytes,
+      yamlFileRealtivePath: yamlFileRealtivePath,
     });
-  }
 
-  // Log the data fetched successfully
-  logger.info("2. Data fetched successfully", {
-    location: "src/generation-handler.js:startGeneration",
-    data_number: data.length,
-  });
+    // # 4. generate and save the document
+    // Generate PDF document from YAML file
+    let pdfPath;
 
-  // # 3. build payload with middleware (handlebars)
-  // get enoteca data (name, logo_url, qr_image_url, digital_menu_url)
-  const rawEnotecaData = await getEnotecaData(enotecaId, {
-    authToken: access_token,
-    baseId: base_id,
-    enotecaTableId: enoteca_table_id,
-  });
-
-  // build enoteca data
-  const enotecaData = {
-    id: rawEnotecaData.fields["Nome"].toLowerCase().replace(/ /g, "-"),
-    name: rawEnotecaData.fields["Nome"],
-    description: rawEnotecaData.fields["Introduzione"],
-    logo_url: rawEnotecaData.fields["Logo"][0].url,
-    qr_image_url: rawEnotecaData.fields["QR Code"][0].url,
-    digital_menu_url: rawEnotecaData.fields["URL Menu Digitale"],
-  };
-
-  const today = new Date();
-  const dateString = today.toISOString().slice(0, 10); // YYYY-MM-DD
-  const fileName = `${dateString} - Carta dei Vini - ${enotecaData.id}.yaml`;
-
-  // Get YAML string for wine list, restaurant and meta data
-  const yamlString = await generateWineListYamlString(data, enotecaData);
-
-  // Save YAML string to file
-  const yamlFileRealtivePath = path.join(enotecaData.id, fileName);
-
-  const { absPath, bytes } = await writeFileAtomicSafe({
-    baseDir: MENU_DATA_DIR,
-    relativePath: yamlFileRealtivePath,
-    data: yamlString,
-    overwrite: true,
-    mode: 0o644,
-  });
-
-  // Log the YAML file saved
-  logger.info("3. YAML file saved", {
-    location: "src/generation-handler.js:startGeneration",
-    absPath: absPath,
-    bytes: bytes,
-    yamlFileRealtivePath: yamlFileRealtivePath,
-  });
-
-  // # 4. generate and save the document
-  // Generate PDF document from YAML file
-  let pdfPath;
-  try {
     // build() now returns the PDF path
     pdfPath = await build(absPath, { outputDir: PDF_OUTPUT_DIR });
 
@@ -530,50 +525,51 @@ export default async function startGeneration({
       yamlPath: absPath,
       pdfPath: pdfPath,
     });
-  } catch (error) {
-    logger.error("Error generating PDF", {
-      location: "src/generation-handler.js:startGeneration",
-      yamlPath: absPath,
-      error: error,
-    });
-    throw error;
-  }
 
-  // # 5. save the document to Airtable
-  // Validate required parameters before calling loadWineListToAirtable
-  // Final check: try to get access_token from environment if still missing
-  if (!access_token) {
-    access_token = process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_AUTH_TOKEN;
+    // # 5. save the document to Airtable
+    // Validate required parameters before calling loadWineListToAirtable
+    // Final check: try to get access_token from environment if still missing
     if (!access_token) {
-      logger.error("access_token is required to save document to Airtable", {
-        location: "src/generation-handler.js:startGeneration",
-        access_token: access_token,
-        hasAIRTABLE_API_KEY: !!process.env.AIRTABLE_API_KEY,
-        hasAIRTABLE_AUTH_TOKEN: !!process.env.AIRTABLE_AUTH_TOKEN,
-      });
-      throw new Error("ERROR: access_token is required to save document to Airtable. Please set AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN environment variable");
+      access_token =
+        process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_AUTH_TOKEN;
+      if (!access_token) {
+        logger.error("access_token is required to save document to Airtable", {
+          location: "src/generation-handler.js:startGeneration",
+          access_token: access_token,
+          hasAIRTABLE_API_KEY: !!process.env.AIRTABLE_API_KEY,
+          hasAIRTABLE_AUTH_TOKEN: !!process.env.AIRTABLE_AUTH_TOKEN,
+        });
+        throw new Error(
+          "ERROR: access_token is required to save document to Airtable. Please set AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN environment variable"
+        );
+      }
     }
-  }
-  if (!wine_list_tab_id) {
-    // Try to get from environment as fallback
-    wine_list_tab_id = process.env.AIRTABLE_WINE_LIST_TAB_ID;
     if (!wine_list_tab_id) {
-      logger.error("wine_list_tab_id is required to save document to Airtable", {
-        location: "src/generation-handler.js:startGeneration",
-        wine_list_tab_id: wine_list_tab_id,
-      });
-      throw new Error("ERROR: wine_list_tab_id is required to save document to Airtable. Please set AIRTABLE_WINE_LIST_TAB_ID environment variable or pass it as parameter");
+      // Try to get from environment as fallback
+      wine_list_tab_id = process.env.AIRTABLE_WINE_LIST_TAB_ID;
+      if (!wine_list_tab_id) {
+        logger.error(
+          "wine_list_tab_id is required to save document to Airtable",
+          {
+            location: "src/generation-handler.js:startGeneration",
+            wine_list_tab_id: wine_list_tab_id,
+          }
+        );
+        throw new Error(
+          "ERROR: wine_list_tab_id is required to save document to Airtable. Please set AIRTABLE_WINE_LIST_TAB_ID environment variable or pass it as parameter"
+        );
+      }
     }
-  }
-  if (!enotecaId) {
-    logger.error("enotecaId is required to save document to Airtable", {
-      location: "src/generation-handler.js:startGeneration",
-      enotecaId: enotecaId,
-    });
-    throw new Error("ERROR: enotecaId is required to save document to Airtable");
-  }
+    if (!enotecaId) {
+      logger.error("enotecaId is required to save document to Airtable", {
+        location: "src/generation-handler.js:startGeneration",
+        enotecaId: enotecaId,
+      });
+      throw new Error(
+        "ERROR: enotecaId is required to save document to Airtable"
+      );
+    }
 
-  try {
     // Convert dateString (YYYY-MM-DD) to Date object for loadWineListToAirtable
     const dateObj = new Date(dateString);
     if (isNaN(dateObj.getTime())) {
@@ -581,15 +577,18 @@ export default async function startGeneration({
     }
 
     // Log parameters before calling loadWineListToAirtable for debugging
-    logger.info(" ####DEBUG#### Calling loadWineListToAirtable with parameters", {
-      location: "src/generation-handler.js:startGeneration",
-      hasAccessToken: !!access_token,
-      base_id,
-      wine_list_tab_id,
-      enotecaId,
-      dateString,
-      pdfPath: pdfPath,
-    });
+    logger.info(
+      " ####DEBUG#### Calling loadWineListToAirtable with parameters",
+      {
+        location: "src/generation-handler.js:startGeneration",
+        hasAccessToken: !!access_token,
+        base_id,
+        wine_list_tab_id,
+        enotecaId,
+        dateString,
+        pdfPath: pdfPath,
+      }
+    );
 
     const result = await loadWineListToAirtable(
       access_token,
@@ -607,9 +606,11 @@ export default async function startGeneration({
     });
   } catch (error) {
     // Extract original error information
-    const originalLocation = error.location || error.originalLocation || "unknown";
-    const originalMessage = error.message || error.originalMessage || "Unknown error";
-    
+    const originalLocation =
+      error.location || error.originalLocation || "unknown";
+    const originalMessage =
+      error.message || error.originalMessage || "Unknown error";
+
     logger.error("Error saving document to Airtable", {
       location: "src/generation-handler.js:startGeneration",
       error: error,
@@ -622,7 +623,7 @@ export default async function startGeneration({
         airtable: error.airtable,
       },
     });
-    
+
     // Create enhanced error with original location and message
     const enhancedError = new Error(
       `ERROR: Error saving document to Airtable. Original error from ${originalLocation}: ${originalMessage}`
