@@ -329,7 +329,7 @@ export async function writeFileAtomicSafe({
 }
 
 export default async function startGeneration({
-  enotecaId,
+  enotecaId = process.env.AIRTABLE_ENO_REC_ID_TEST,
   access_token = process.env.AIRTABLE_API_KEY,
   base_id = process.env.AIRTABLE_BASE_ID,
   table_id = process.env.AIRTABLE_INV_TAB_ID,
@@ -341,14 +341,16 @@ export default async function startGeneration({
   // # 0. Param Validation
 
   if (!enotecaId) {
-    logger.error("Enoteca is required", {
+    logger.error("enotecaID is required", {
       location: "src/generation-handler.js:startGeneration",
-      enoteca: enotecaId,
+      enotecaId: enotecaId,
     });
 
-    // TODO: reactivate throw error and delete the default value
-    // const enoteca = "Porgi l'Altra Pancia"
-    // throw new Error("PARAM_ERROR: enoteca is required");
+    throw new Error({
+      msg: "PARAM_ERROR: enotecaId is required",
+      location: "src/generation-handler.js:startGeneration",
+      enotecaId: enotecaId,
+    });
   }
   if (!access_token) {
     logger.warning(
@@ -368,9 +370,11 @@ export default async function startGeneration({
           location: "src/generation-handler.js:startGeneration",
         }
       );
-      throw new Error(
-        "ERROR: access_token is required. Please set AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN environment variable"
-      );
+      throw new Error({
+        msg: "ERROR: access_token is required. Please set AIRTABLE_API_KEY or AIRTABLE_AUTH_TOKEN environment variable",
+        location: "src/generation-handler.js:startGeneration",
+        access_token: access_token,
+      });
     }
   }
   if (!base_id) {
@@ -398,16 +402,22 @@ export default async function startGeneration({
       location: "src/generation-handler.js:startGeneration",
       out_tab_id: out_tab_id,
     });
-    // TODO: reactivate throw error
-    // throw new Error("PARAM_ERROR: out tab id is required");
+    throw new Error({
+      msg: "PARAM_ERROR: out tab id is required",
+      location: "src/generation-handler.js:startGeneration",
+      out_tab_id: out_tab_id,
+    });
   }
   if (!out_field_id) {
     logger.error("Missing out field id, it is required", {
       location: "src/generation-handler.js:startGeneration",
       out_field_id: out_field_id,
     });
-    // TODO: reactivate throw error
-    // throw new Error("PARAM_ERROR: out record id is required");
+    throw new Error({
+      msg: "PARAM_ERROR: out record id is required",
+      location: "src/generation-handler.js:startGeneration",
+      out_field_id: out_field_id,
+    });
   }
 
   // Log the parameters validation success
@@ -426,29 +436,36 @@ export default async function startGeneration({
   // (equivalente a `{Campo}=TRUE()` ma più robusto)
   let filterFormula = "{Carta dei Vini}";
 
-  if (enotecaId) {
-    // Aggiungi il filtro per Enoteca.
-    // Importante: a seconda della base, `{Enoteca}` può essere:
-    // - linked record field -> contiene record IDs
-    // - lookup/text field   -> contiene nomi
-    // Per evitare 0 record “misteriosi”, accettiamo entrambe le forme.
-    //
-    // Se `{Enoteca}` è linked: ARRAYJOIN({Enoteca}) produce una stringa di recordId.
-    // Se `{Enoteca}` è lookup: ARRAYJOIN({Enoteca}) produce una stringa di nomi.
-    const enotecaMatchFormula =
-      `OR(` +
-      `FIND("${enotecaId}", ARRAYJOIN({Enoteca}, ",")) > 0, ` +
-      `FIND("${String(enoteca).replace(
-        /"/g,
-        '\\"'
-      )}", ARRAYJOIN({Enoteca}, ",")) > 0` +
-      `)`;
+  try {
+    if (enotecaId) {
+      // Aggiungi il filtro per Enoteca.
+      // Il campo `{Enoteca}` è un linked record field che contiene record IDs.
+      // Usiamo ARRAYJOIN per convertire l'array di record IDs in una stringa
+      // e poi cerchiamo l'enotecaId nella stringa risultante.
+      const escapedEnotecaId = String(enotecaId).replace(/"/g, '\\"');
+      const enotecaMatchFormula = `FIND("${escapedEnotecaId}", ARRAYJOIN({Enoteca}, ",")) > 0`;
 
-    filterFormula = `AND({Carta dei Vini}, ${enotecaMatchFormula})`;
+      filterFormula = `AND({Carta dei Vini}, ${enotecaMatchFormula})`;
+    }
+
+  } catch (error) {
+    logger.error("Error building filter formula", {
+      location: "src/generation-handler.js:startGeneration",
+      error: error,
+      enotecaId: enotecaId,
+      source: "src/generation-handler.js:startGeneration",
+    });
+    throw new Error("Error building filter formula", {
+      location: "src/generation-handler.js:startGeneration",
+      error: error,
+      enotecaId: enotecaId,
+      source: "src/generation-handler.js:startGeneration",
+    });
   }
 
   // # 2. fetch data from Airtable with filter
   let data;
+
   try {
     // try to fetch data from Airtable
     data = await fetchDefaultTableRecords(
@@ -491,7 +508,8 @@ export default async function startGeneration({
     const fileName = `${dateString} - Carta dei Vini - ${enotecaData.id}.yaml`;
 
     // Get YAML string for wine list, restaurant and meta data
-    const yamlString = await generateWineListYamlString(data, enotecaData);
+    const yamlResult = await generateWineListYamlString(data, enotecaData);
+    const yamlString = yamlResult.fullYamlString;
 
     // Save YAML string to file
     const yamlFileRealtivePath = path.join(enotecaData.id, fileName);
@@ -605,15 +623,16 @@ export default async function startGeneration({
       result: result,
     });
   } catch (error) {
+    console.log("(startGeneration) error: ", error);
     // Extract original error information
     const originalLocation =
-      error.location || error.originalLocation || "unknown";
+      error.location || error.source || "unknown";
     const originalMessage =
-      error.message || error.originalMessage || "Unknown error";
+      error.message || error.msg || "Unknown error";
 
     logger.error("Error saving document to Airtable", {
       location: "src/generation-handler.js:startGeneration",
-      error: error,
+      error: error.toString(),
       originalLocation,
       originalMessage,
       errorDetails: {
@@ -622,6 +641,14 @@ export default async function startGeneration({
         statusText: error.statusText,
         airtable: error.airtable,
       },
+    });
+    
+    throw new Error({
+      msg: "ERROR: Error saving document to Airtable. Original error from ${originalLocation}: ${originalMessage}",
+      location: "src/generation-handler.js:startGeneration",
+      error: error,
+      originalLocation: originalLocation,
+      originalMessage: originalMessage,
     });
 
     // Create enhanced error with original location and message

@@ -145,10 +145,12 @@ export async function fetchDefaultTableRecords(
       offset = result.offset || null;
     } while (offset);
   } catch (error) {
+    // TODO: remove after testing
+    console.log("(fetchDefaultTableRecords) error: ", error);
     throw new Error({
       msg: "Error fetching default table records",
       source: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
-      error: error.message,
+      error: error.message.toString(),
       status: error.status,
       statusText: error.statusText,
     });

@@ -207,19 +207,20 @@ function buildUrl(path, query) {
  */
 async function airtableRequest({ method, token, path, query, body }) {
   // * 0. validate parameters
-  if (!token)
+  if (!token) {
     throw new Error({
       msg: "Airtable API token is required (PAT).",
       source: "src/lib/api/airtable/airtableApi.js:airtableRequest",
       token: token,
     });
-  if (!path)
+  }
+  if (!path) {
     throw new Error({
       msg: "Airtable API path is required.",
       source: "src/lib/api/airtable/airtableApi.js:airtableRequest",
       path: path,
     });
-
+  }
   // * 1. build the URL
   const url = buildUrl(path, query);
 
@@ -250,27 +251,53 @@ async function airtableRequest({ method, token, path, query, body }) {
 
     // if the response is not ok, throw an error
     if (!res.ok) {
+      // TODO: remove after testing
+      console.log("(airtableRequest - res not ok) error: ", res);
+      console.log("\t- status: ", res.status);
+      console.log("\t- statusText: ", res.statusText);
+      console.log("\t- response: ", json);
+      console.log("\t- url: ", url);
+      console.log("\t- token: ", token);
+      console.log("\t- body: ", body);
+      
+      // Provide more specific error messages for common status codes
+      let errorMsg = "Airtable request failed";
+      if (res.status === 401) {
+        errorMsg = "Airtable authentication failed (401 Unauthorized). Check that your access_token is valid and has the necessary permissions.";
+      } else if (res.status === 403) {
+        errorMsg = "Airtable access forbidden (403). The token may not have permission to access this base or table.";
+      } else if (res.status === 404) {
+        errorMsg = "Airtable resource not found (404). Check that the base_id and table_id are correct.";
+      }
+      
       throw new Error({
-        msg: "Airtable request failed (non-ok status)",
+        msg: errorMsg,
         source: "src/lib/api/airtable/airtableApi.js:airtableRequest",
         status: res.status,
         statusText: res.statusText,
         response: json,
         url: url,
-        cause: "Airtable request failed",
+        cause: json?.error?.message || "Airtable request failed",
       });
     }
 
     return json;
   } catch (error) {
+    // TODO: remove after testing
+    console.log("(airtableRequest - error) error: ", error);
+    
+    // If error is already our structured error (from !res.ok), rethrow it
+    if (error.status !== undefined || error.source) {
+      throw error;
+    }
+    
+    // Otherwise, it's a network/runtime error - build a new error
     throw new Error({
       msg: "Airtable request failed (error)",
       source: "src/lib/api/airtable/airtableApi.js:airtableRequest",
-      status: res.status,
-      statusText: res.statusText,
-      response: json,
       url: url,
-      cause: error,
+      cause: error.message || error.toString(),
+      originalError: error,
     });
   }
 }
@@ -460,18 +487,24 @@ export async function listRecords({
   params = {},
 }) {
   // * 0. validate parameters
-  if (!baseId)
+  if (!baseId) {
+    // TODO: remove after testing
+    console.log("(listRecords) error: ", baseId);
     throw new Error({
       msg: "baseId is required",
       source: "src/lib/api/airtable/airtableApi.js:listRecords",
       baseId: baseId,
     });
-  if (!tableIdOrName)
+  }
+  if (!tableIdOrName) {
+    // TODO: remove after testing
+    console.log("(listRecords) error: ", tableIdOrName);
     throw new Error({
       msg: "tableIdOrName is required",
       source: "src/lib/api/airtable/airtableApi.js:listRecords",
       tableIdOrName: tableIdOrName,
     });
+  }
 
   // * 1. make the request
   try {
@@ -484,6 +517,8 @@ export async function listRecords({
 
     return result;
   } catch (error) {
+    // TODO: remove after testing
+    console.log("(listRecords) error: ", error);
     throw new Error({
       msg: "Error listing records",
       source: "src/lib/api/airtable/airtableApi.js:listRecords",
