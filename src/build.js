@@ -399,25 +399,26 @@ export async function build(
     return htmlPath;
   }
 
+  const cacheDir =
+    process.env.PUPPETEER_CACHE_DIR ||
+    "/opt/render/project/src/.cache/puppeteer";
+  const buildId = process.env.PUPPETEER_CHROME_BUILD_ID || "131.0.6778.204";
 
-const cacheDir = process.env.PUPPETEER_CACHE_DIR || "/opt/render/.cache/puppeteer";
-const buildId = process.env.PUPPETEER_CHROME_BUILD_ID || "131.0.6778.204";
+  const executablePath = computeExecutablePath({
+    browser: Browser.CHROME,
+    buildId,
+    cacheDir,
+  });
 
-const executablePath = computeExecutablePath({
-  browser: Browser.CHROME,
-  buildId,
-  cacheDir,
-});
-
-  // Launch a headless browser and navigate to the HTML file
   const browser = await puppeteer.launch({
-    executablePath: executablePath,
+    executablePath,
     args: [
-      "--font-render-hinting=none",
       "--no-sandbox",
       "--disable-setuid-sandbox",
+      "--font-render-hinting=none",
     ],
   });
+
   // Create a new page in the browser
   const page = await browser.newPage();
   // Navigate to the HTML file
