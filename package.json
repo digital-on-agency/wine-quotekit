@@ -5,7 +5,8 @@
   "scripts": {
     "build": "node src/build.js",
     "preview": "node src/build.js --html",
-    "list": "node -e \"console.log(require('fs').readdirSync('./data/proposals').join('\\n'))\""
+    "list": "node -e \"console.log(require('fs').readdirSync('./data/proposals').join('\\n'))\"",
+    "start": "node src/lib/api/server/server.js"
   },
   "dependencies": {
     "dotenv": "^17.2.3",
