@@ -398,7 +398,7 @@ export async function build(
 
   // Launch a headless browser and navigate to the HTML file
   const browser = await puppeteer.launch({
-    args: ["--font-render-hinting=none"],
+    args: ["--font-render-hinting=none", "--no-sandbox", "--disable-setuid-sandbox"],
   });
   // Create a new page in the browser
   const page = await browser.newPage();
