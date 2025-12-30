@@ -139,7 +139,8 @@ function buildWineListContext(rawData, absData) {
   if (fs.existsSync(categoriesDefPath)) {
     const categoriesDefData = readYaml(categoriesDefPath);
     categoriesDefinitions = categoriesDefData.categories || [];
-  } else { // if categories.yaml is not found, log a warning
+  } else {
+    // if categories.yaml is not found, log a warning
     logger.warn(`File categories.yaml not found in ${categoriesDefPath}`, {
       location: "src/build.js:buildWineListContext",
       categoriesDefPath: categoriesDefPath,
@@ -187,13 +188,10 @@ function buildWineListContext(rawData, absData) {
 
       // Debug: check if the category was found
       if (!categoryDef.id) {
-        logger.warn(
-          `Category "${categoryName}" not found in categories.yaml`,
-          {
-            location: "src/build.js:buildWineListContext",
-            categoryName: categoryName,
-          }
-        );
+        logger.warn(`Category "${categoryName}" not found in categories.yaml`, {
+          location: "src/build.js:buildWineListContext",
+          categoryName: categoryName,
+        });
       }
 
       category = {
@@ -283,18 +281,22 @@ function buildWineListContext(rawData, absData) {
 
   // Sort categories: first by order in categories.yaml, then by name for categories not in yaml
   const categories = categoriesWithWines.sort((a, b) => {
-    const orderA = categoryOrderMap.has(a.id) ? categoryOrderMap.get(a.id) : Infinity;
-    const orderB = categoryOrderMap.has(b.id) ? categoryOrderMap.get(b.id) : Infinity;
-    
+    const orderA = categoryOrderMap.has(a.id)
+      ? categoryOrderMap.get(a.id)
+      : Infinity;
+    const orderB = categoryOrderMap.has(b.id)
+      ? categoryOrderMap.get(b.id)
+      : Infinity;
+
     // If both are in categories.yaml, sort by their order
     if (orderA !== Infinity && orderB !== Infinity) {
       return orderA - orderB;
     }
-    
+
     // If only one is in categories.yaml, it comes first
     if (orderA !== Infinity) return -1;
     if (orderB !== Infinity) return 1;
-    
+
     // If neither is in categories.yaml, sort alphabetically by name
     return (a.name || "").localeCompare(b.name || "");
   });
@@ -396,9 +398,19 @@ export async function build(
     return htmlPath;
   }
 
+  const executablePath = computeExecutablePath({
+    browser: "chrome",
+    cacheDir: process.env.PUPPETEER_CACHE_DIR || "/opt/render/.cache/puppeteer",
+  });
+
   // Launch a headless browser and navigate to the HTML file
   const browser = await puppeteer.launch({
-    args: ["--font-render-hinting=none", "--no-sandbox", "--disable-setuid-sandbox"],
+    executablePath: executablePath,
+    args: [
+      "--font-render-hinting=none",
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+    ],
   });
   // Create a new page in the browser
   const page = await browser.newPage();
