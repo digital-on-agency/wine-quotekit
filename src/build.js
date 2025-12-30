@@ -13,7 +13,7 @@ import yaml from "js-yaml";
 import { eur, formatDate } from "./helpers/misc.js";
 // puppeteer: headless browser for PDF generation
 import puppeteer from "puppeteer";
-import { computeExecutablePath } from "@puppeteer/browsers";
+import { Browser, computeExecutablePath } from "@puppeteer/browsers";
 
 // # -------------------------- GLOBAL VARIABLES --------------------------
 // __filename: current file name
@@ -399,10 +399,15 @@ export async function build(
     return htmlPath;
   }
 
-  const executablePath = computeExecutablePath({
-    browser: "chrome",
-    cacheDir: process.env.PUPPETEER_CACHE_DIR || "/opt/render/.cache/puppeteer",
-  });
+
+const cacheDir = process.env.PUPPETEER_CACHE_DIR || "/opt/render/.cache/puppeteer";
+const buildId = process.env.PUPPETEER_CHROME_BUILD_ID || "131.0.6778.204";
+
+const executablePath = computeExecutablePath({
+  browser: Browser.CHROME,
+  buildId,
+  cacheDir,
+});
 
   // Launch a headless browser and navigate to the HTML file
   const browser = await puppeteer.launch({
