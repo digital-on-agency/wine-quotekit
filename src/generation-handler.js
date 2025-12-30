@@ -26,7 +26,7 @@ import { build } from "./build.js";
 
 dotenv.config();
 
-// Setup working directories and template/output paths
+// Setup working directories and template/output paths.
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
