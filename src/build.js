@@ -13,6 +13,7 @@ import yaml from "js-yaml";
 import { eur, formatDate } from "./helpers/misc.js";
 // puppeteer: headless browser for PDF generation
 import puppeteer from "puppeteer";
+import { computeExecutablePath } from "@puppeteer/browsers";
 
 // # -------------------------- GLOBAL VARIABLES --------------------------
 // __filename: current file name
