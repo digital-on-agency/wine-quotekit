@@ -80,7 +80,7 @@ const pinoLogger = pino(
 );
 
 /**
- * Sanitize sensitive data from log metadata
+ * Sanitize sensitive data from log metadata.
  * Removes or masks tokens, passwords, and other sensitive information
  */
 function sanitizeMeta(meta) {
