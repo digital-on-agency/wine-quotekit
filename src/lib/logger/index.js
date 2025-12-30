@@ -79,22 +79,69 @@ const pinoLogger = pino(
   streams,
 );
 
+/**
+ * Sanitize sensitive data from log metadata
+ * Removes or masks tokens, passwords, and other sensitive information
+ */
+function sanitizeMeta(meta) {
+  if (!meta || typeof meta !== 'object') {
+    return meta;
+  }
+  
+  const sanitized = { ...meta };
+  const sensitiveKeys = [
+    'access_token',
+    'token',
+    'authToken',
+    'password',
+    'secret',
+    'apiKey',
+    'api_key',
+  ];
+  
+  // Remove or mask sensitive keys
+  for (const key of sensitiveKeys) {
+    if (key in sanitized && sanitized[key]) {
+      const value = String(sanitized[key]);
+      // Mask token: show first 4 and last 4 characters
+      if (value.length > 8) {
+        sanitized[key] = `${value.substring(0, 4)}...${value.substring(value.length - 4)}`;
+      } else {
+        sanitized[key] = '***';
+      }
+    }
+  }
+  
+  // Recursively sanitize nested objects (like req.body)
+  for (const [key, value] of Object.entries(sanitized)) {
+    if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+      sanitized[key] = sanitizeMeta(value);
+    }
+  }
+  
+  return sanitized;
+}
+
 // Interfaccia di logging dell'applicazione:
 // logger.info("messaggio", { meta })
 // logger.warn("messaggio", { meta })
 // logger.error("messaggio", { meta })
 export const logger = {
   info(message, meta = {}) {
-    pinoLogger.info(meta, message);
+    const sanitized = sanitizeMeta(meta);
+    pinoLogger.info(sanitized, message);
   },
   warning(message, meta = {}) {
-    pinoLogger.warn(meta, message);
+    const sanitized = sanitizeMeta(meta);
+    pinoLogger.warn(sanitized, message);
   },
   warn(message, meta = {}) {
-    pinoLogger.warn(meta, message);
+    const sanitized = sanitizeMeta(meta);
+    pinoLogger.warn(sanitized, message);
   },
   error(message, meta = {}) {
-    pinoLogger.error(meta, message);
+    const sanitized = sanitizeMeta(meta);
+    pinoLogger.error(sanitized, message);
   },
 };
 
