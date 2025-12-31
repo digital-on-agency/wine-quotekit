@@ -434,16 +434,26 @@ export default async function startGeneration({
   // # 1. Costruisci il filterByFormula con le condizioni
   // Nota: in Airtable un checkbox può essere testato anche come boolean diretto: `{Campo}`
   // (equivalente a `{Campo}=TRUE()` ma più robusto)
-  let filterFormula = "{Update Catalog}";
+  let filterFormula = "{Carta dei Vini}";
+  let rawEnotecaData = null; // Salva i dati per riutilizzarli dopo
 
   try {
     if (enotecaId) {
-      // Aggiungi il filtro per Enoteca.
-      // Il campo `{Enoteca}` è un linked record field che contiene record IDs.
-      // Usiamo ARRAYJOIN per convertire l'array di record IDs in una stringa
-      // e poi cerchiamo l'enotecaId nella stringa risultante.
-      const escapedEnotecaId = String(enotecaId).replace(/"/g, '\\"');
-      const enotecaMatchFormula = `FIND("${escapedEnotecaId}", ARRAYJOIN({Enoteca}, ",")) > 0`;
+      // Recupera i dati dell'enoteca per ottenere il nome
+      // Il campo `{Enoteca}` potrebbe essere un lookup/text field che contiene nomi
+      // invece di record IDs, quindi usiamo il nome nella formula
+      rawEnotecaData = await getEnotecaData(enotecaId, {
+        authToken: access_token,
+        baseId: base_id,
+        enotecaTableId: enoteca_table_id,
+      });
+      
+      const enotecaName = rawEnotecaData.fields["Nome"];
+      
+      // Aggiungi il filtro per Enoteca usando il nome
+      // Se `{Enoteca}` è un lookup/text field, ARRAYJOIN produce una stringa di nomi
+      const escapedEnotecaName = String(enotecaName).replace(/"/g, '\\"');
+      const enotecaMatchFormula = `FIND("${escapedEnotecaName}", ARRAYJOIN({Enoteca}, ",")) > 0`;
 
       filterFormula = `AND({Carta dei Vini}, ${enotecaMatchFormula})`;
     }
@@ -464,33 +474,22 @@ export default async function startGeneration({
   }
 
   // # 2. fetch data from Airtable with filter
-  let data = null;
+  let data;
   let count = 0;
+  // TODO: controllare se ritorna vuoto e gestire la cosa
 
   try {
-    // try to fetch data from Airtable, retry up to 3 times if the result is an empty array
-    do {
-      data = await fetchDefaultTableRecords(
-        {
-          filterByFormula: filterFormula,
-        },
-        {
-          authToken: access_token,
-          baseId: base_id,
-          tableIdOrName: table_id,
-        }
-      );
-      // If data.records is empty, increment count and retry
-      if (Array.isArray(data?.records) && data.records.length === 0) {
-        count++;
-        logger.warn("Fetched empty data, retrying...", {
-          location: "src/generation-handler.js:startGeneration",
-          attempt: count,
-        });
-      } else {
-        break;
+    // try to fetch data from Airtable
+    data = await fetchDefaultTableRecords(
+      {
+        filterByFormula: filterFormula,
+      },
+      {
+        authToken: access_token,
+        baseId: base_id,
+        tableIdOrName: table_id,
       }
-    } while (count < 3);
+    );
 
 
     console.log('(startGeneration) data fetched successfully: ');
@@ -504,11 +503,14 @@ export default async function startGeneration({
 
     // # 3. build payload with middleware (handlebars)
     // get enoteca data (name, logo_url, qr_image_url, digital_menu_url)
-    const rawEnotecaData = await getEnotecaData(enotecaId, {
-      authToken: access_token,
-      baseId: base_id,
-      enotecaTableId: enoteca_table_id,
-    });
+    // Riutilizza i dati già recuperati per la formula, oppure recuperali se non erano disponibili
+    if (!rawEnotecaData) {
+      rawEnotecaData = await getEnotecaData(enotecaId, {
+        authToken: access_token,
+        baseId: base_id,
+        enotecaTableId: enoteca_table_id,
+      });
+    }
 
     // build enoteca data
     const enotecaData = {

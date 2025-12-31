@@ -148,6 +148,7 @@ export async function fetchDefaultTableRecords(
 
       const t0 = Date.now();
 
+      // TODO: remove after testing
       console.log({
         msg: "(fetchDefaultTableRecords) page_request",
         page: pageCount,
