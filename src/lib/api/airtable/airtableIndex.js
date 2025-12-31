@@ -91,44 +91,77 @@ export async function fetchDefaultTableRecords(
     tableIdOrName = AIRTABLE_INV_TAB_ID,
   } = {}
 ) {
+  // * 0. validate parameters
+  let missingParams = [];
   if (!authToken) {
-    throw new Error({
-      msg: "AIRTABLE_AUTH_TOKEN (env or override) is required",
-      source: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
-      authToken: authToken,
-    });
+    missingParams.push("authToken");
   }
   if (!baseId) {
-    throw new Error({
-      msg: "AIRTABLE_BASE_ID (env or override) is required",
-      source: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
-      baseId: baseId,
-    });
+    missingParams.push("baseId");
   }
   if (!tableIdOrName) {
+    missingParams.push("tableIdOrName");
+  }
+  if (missingParams.length > 0) {
     throw new Error({
-      msg: "AIRTABLE_INV_TAB_ID (env or override) is required",
+      msg: `Missing parameters: ${missingParams.join(", ")}`,
       source: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
-      tableIdOrName: tableIdOrName,
+      missingParams: missingParams,
     });
   }
 
-  // Accumula tutti i record attraverso la paginazione
+  // TODO: remove after testing
+  console.log({
+    msg: "START fetchDefaultTableRecords FUNCTION",
+    baseId: baseId,
+    tableIdOrName: tableIdOrName,
+    params_keys: Object.keys(params),
+    filterByFormula: params.filterByFormula,
+    fields_count: Array.isArray(params?.fields)
+      ? params.fields.length
+      : undefined,
+    sort_count: Array.isArray(params?.sort) ? params.sort.length : undefined,
+    authToken_redacted: redactToken(authToken),
+  });
+
+  // * 1. fetch all records through pagination
   const allRecords = [];
   let offset = null;
   let pageCount = 0;
 
   try {
     do {
-      // Prepara i parametri per questa richiesta
+      // prepare the request parameters
       const requestParams = { ...params };
       if (offset) {
         requestParams.offset = offset;
       }
-      // Assicurati che pageSize sia impostato (default 100, max 100)
+      // ensure that pageSize is set (default 100, max 100)
       if (!requestParams.pageSize) {
         requestParams.pageSize = 100;
       }
+
+      // pageSize: default 100, clamp 1..100
+      const rawPageSize = requestParams.pageSize ?? 100;
+      const pageSize = Math.max(1, Math.min(100, Number(rawPageSize) || 100));
+      requestParams.pageSize = pageSize;
+
+      const t0 = Date.now();
+
+      console.log({
+        msg: "(fetchDefaultTableRecords) page_request",
+        page: pageCount,
+        offset_in: offset,
+        pageSize,
+        view: requestParams.view,
+        hasFilter: Boolean(requestParams.filterByFormula),
+        fields_count: Array.isArray(requestParams.fields)
+          ? requestParams.fields.length
+          : undefined,
+        sort_count: Array.isArray(requestParams.sort)
+          ? requestParams.sort.length
+          : undefined,
+      });
 
       const result = await listRecords({
         token: authToken,
@@ -137,16 +170,49 @@ export async function fetchDefaultTableRecords(
         params: requestParams,
       });
 
-      // Accumula i record di questa pagina
-      allRecords.push(...(result.records || []));
+      const dtMs = Date.now() - t0;
+
+      const records = result?.records;
+      const nextOffset = result?.offset || null;
+
+      if (!Array.isArray(records)) {
+        // if Airtable responds differently (or listRecords has a bug in prod)
+        logger.warn("page_response_unexpected_shape", {
+          page: pageCount,
+          durationMs: dtMs,
+          typeof_records: typeof records,
+          result_keys: result ? Object.keys(result) : null,
+        });
+      }
+
+      // accumulate the records of this page
+      const recordsCount = Array.isArray(records) ? records.length : 0;
+      allRecords.push(...(Array.isArray(records) ? records : []));
+
+      // TODO: remove after testing
+      console.log({
+        msg: "(fetchDefaultTableRecords) page_response",
+        page: pageCount,
+        durationMs: dtMs,
+        recordsCount,
+        totalSoFar: allRecords.length,
+        offset_out: nextOffset,
+      });
+
+      // increment the page count
       pageCount++;
 
-      // Controlla se c'è un offset per la prossima pagina
+      // check if there is an offset for the next page
       offset = result.offset || null;
     } while (offset);
   } catch (error) {
     // TODO: remove after testing
-    console.log("(fetchDefaultTableRecords) error: ", error);
+    console.log({
+      msg: "(fetchDefaultTableRecords) error",
+      error: error.message.toString(),
+      status: error.status,
+      statusText: error.statusText,
+    });
     throw new Error({
       msg: "Error fetching default table records",
       source: "src/lib/api/airtable/airtableIndex.js:fetchDefaultTableRecords",
@@ -156,10 +222,21 @@ export async function fetchDefaultTableRecords(
     });
   }
 
-  // Costruisci un risultato compatibile con la struttura originale
+  // build a result compatible with the original structure
   const finalResult = {
     records: allRecords,
   };
+
+  console.log({
+    msg: "(fetchDefaultTableRecords) final_result",
+    pages: pageCount,
+    totalRecords: allRecords.length,
+    empty: allRecords.length === 0,
+    hint: 
+      allRecords.length === 0
+        ? "If this is unexpected: check view/filterByFormula/fields in deployed env."
+        : undefined,
+  });
 
   return finalResult;
 }

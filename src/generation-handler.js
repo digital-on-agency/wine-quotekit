@@ -478,6 +478,8 @@ export default async function startGeneration({
         tableIdOrName: table_id,
       }
     );
+    console.log('(startGeneration) data fetched successfully: ');
+    console.log(data);
 
     // Log the data fetched successfully
     logger.info("2. Data fetched successfully", {
