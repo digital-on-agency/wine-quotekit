@@ -464,20 +464,35 @@ export default async function startGeneration({
   }
 
   // # 2. fetch data from Airtable with filter
-  let data;
+  let data = null;
+  let count = 0;
 
   try {
-    // try to fetch data from Airtable
-    data = await fetchDefaultTableRecords(
-      {
-        filterByFormula: filterFormula,
-      },
-      {
-        authToken: access_token,
-        baseId: base_id,
-        tableIdOrName: table_id,
+    // try to fetch data from Airtable, retry up to 3 times if the result is an empty array
+    do {
+      data = await fetchDefaultTableRecords(
+        {
+          filterByFormula: filterFormula,
+        },
+        {
+          authToken: access_token,
+          baseId: base_id,
+          tableIdOrName: table_id,
+        }
+      );
+      // If data.records is empty, increment count and retry
+      if (Array.isArray(data?.records) && data.records.length === 0) {
+        count++;
+        logger.warn("Fetched empty data, retrying...", {
+          location: "src/generation-handler.js:startGeneration",
+          attempt: count,
+        });
+      } else {
+        break;
       }
-    );
+    } while (count < 3);
+
+
     console.log('(startGeneration) data fetched successfully: ');
     console.log(data);
 
