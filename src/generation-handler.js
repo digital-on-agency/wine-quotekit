@@ -434,7 +434,7 @@ export default async function startGeneration({
   // # 1. Costruisci il filterByFormula con le condizioni
   // Nota: in Airtable un checkbox può essere testato anche come boolean diretto: `{Campo}`
   // (equivalente a `{Campo}=TRUE()` ma più robusto)
-  let filterFormula = "{Carta dei Vini}";
+  let filterFormula = "{Update Catalog}";
 
   try {
     if (enotecaId) {
