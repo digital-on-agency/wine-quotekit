@@ -121,7 +121,7 @@ export async function fetchDefaultTableRecords(
       ? params.fields.length
       : undefined,
     sort_count: Array.isArray(params?.sort) ? params.sort.length : undefined,
-    authToken_redacted: redactToken(authToken),
+    authToken_redacted: authToken,
   });
 
   // * 1. fetch all records through pagination
