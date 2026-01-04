@@ -3,6 +3,13 @@
 # e un path all'icona corrispondente
 
 categories:
+  - id: "Bollicine"
+    name: "Bollicine"
+    subtitle: "Bollicine fresche e aromatiche"
+    note: "Disponibilità dei vini soggetta a variazioni."
+    icon_path: "../assets/img/icon-sparkling-wine.png"
+    icon_alt: "Icona bollicine"
+
   - id: "Vini Bianchi"
     name: "Vini Bianchi"
     subtitle: "Bianchi freschi e minerali"
@@ -30,10 +37,3 @@ categories:
     note: "Disponibilità dei vini soggetta a variazioni."
     icon_path: "../assets/img/icon-dessert-wine.png"
     icon_alt: "Icona vini dolci"
-
-  - id: "Bollicine"
-    name: "Bollicine"
-    subtitle: "Bollicine fresche e aromatiche"
-    note: "Disponibilità dei vini soggetta a variazioni."
-    icon_path: "../assets/img/icon-sparkling-wine.png"
-    icon_alt: "Icona bollicine"
