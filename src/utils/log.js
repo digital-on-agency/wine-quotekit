@@ -1,0 +1,1 @@
+// Logger minimale: wrapper su console o libreria leggera, livelli (info/warn/error/debug), formattazione consistente. Evita console.log sparsi e permette di silenziare/verbosare via flag CLI o env.

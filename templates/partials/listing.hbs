@@ -1,0 +1,83 @@
+<section class="listing">
+  <style>
+    .category-cover {
+      page-break-after: always;
+      display: flex;
+      flex-direction: column;
+      gap: 8mm;
+      align-items: center;
+      justify-content: center;
+      height: calc(297mm - (10mm * 2));
+    }
+
+    .listing h2 {
+      font-size: 13pt;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 6mm 0 4mm 0;
+      font-weight: 600;
+      opacity: 0.85;
+      page-break-after: avoid;
+      white-space: normal;
+      orphans: 3;
+    }
+
+    .listing h3 {
+      font-size: 11pt;
+      text-transform: none;
+      letter-spacing: 0.03em;
+      margin: 4mm 0 0 0;
+      padding-bottom: 2.5mm;
+      padding-top: 5mm;
+      font-weight: 500;
+      opacity: 0.75;
+      font-style: italic;
+      page-break-before: auto;
+      page-break-after: avoid;
+      white-space: normal;
+      orphans: 2;
+      widows: 2;
+    }
+
+    .line-item-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding: 0;
+    }
+
+    .line-item {
+      padding: 0;
+      display: grid;
+      padding: 2mm;
+      grid-template-columns: 2fr 0.7fr 0.3fr;
+      grid-column-gap: 15px;
+      break-inside: avoid;
+    }
+  </style>
+
+  {{> category_cover this.tipologia}}
+
+  {{#each this.list as |region|}}
+
+  <h2>{{region.regione}}</h2>
+
+  {{#each (objectKeys region.value) as |zoneName|}}
+
+  <h3>{{zoneName}}</h3>
+
+  <div class="line-item-container">
+
+    {{#each (lookup region.value zoneName) as |wine|}}
+
+    {{> lineItem wine}}
+
+    {{/each}}
+
+  </div>
+
+  {{/each}}
+
+  {{/each}}
+
+</section>

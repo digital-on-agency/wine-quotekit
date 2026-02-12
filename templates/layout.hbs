@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="it">
+<style>
+  .menu-doc {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  .main-cover {
+    box-sizing: border-box;
+    width: 100%;
+
+    /* A4 height = 297mm, minus top+bottom margins (10mm + 10mm) */
+    height: calc(297mm - (10mm * 2));
+
+    /* facoltativo: layout “cover” */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    /* forza che dopo la cover si vada a pagina nuova */
+    break-after: page;
+    page-break-after: always;
+    /* fallback */
+  }
+
+  .listing-page {
+    page-break-after: always; 
+    break-after: page;
+  }
+</style>
+
+<head>
+  <meta charset="utf-8" />
+</head>
+
+
+<body class="menu-doc">
+  {{> main_cover param_main_cover}}
+
+  {{#each param_listing as |category|}}
+  <section class="listing-page">
+    {{> listing this}}
+  </section>
+  {{/each}}
+</body>
+
+</html>

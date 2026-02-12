@@ -1,0 +1,1 @@
+// Converte record Airtable in un oggetto dominio pulito e stabile: normalizza tipi (string/number), gestisce campi mancanti, risolve relazioni (categorie↔vini), produce una struttura pronta per domain/normalize.js.

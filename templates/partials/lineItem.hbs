@@ -1,0 +1,83 @@
+<div class="line-item">
+  <style>
+    .line-item h3 {
+      font-weight: bold;
+      font-style: normal;
+
+      margin: 0 0 1mm 0;
+      padding: 0;
+
+      white-space: normal;
+      /* ignora newline e spazi multipli nel dato */
+      height: auto;
+      min-height: 0;
+    }
+
+    .line-item p {
+      font-size: 9pt;
+      margin: 0 0 1mm 0;
+      opacity: 0.8;
+      padding-left: 3mm;
+    }
+
+    .line-item-middle {
+        display: flex;
+        flex-direction: column;
+        justify-content: start;
+
+        gap: 4mm;
+
+        text-align: right;
+    }
+
+    .line-item-producer {
+      font-size: 10pt;
+      font-weight: 400;
+    }
+
+    .line-item-price {
+      text-align: right;
+      font-size: 10pt;
+      font-weight: 600;
+    }
+  </style>
+
+  <div class="line-item-name-info">
+    <h3>{{lookup this "Vino (from Wine Catalog)"}}</h3>
+    {{#if (lookup this "Lista Vitigni AI")}}
+      <p>{{lookup this "Lista Vitigni AI"}}</p>
+    {{/if}}
+
+    {{#if (lookup this "Affinamento AI")}}
+      <p>
+        {{lookup this "Affinamento AI"}}
+        {{#if (lookup this "Alcolicità AI")}}
+          -
+          {{lookup this "Alcolicità AI"}}
+        {{/if}}
+      </p>
+    {{else}}
+      {{#if (lookup this "Alcolicità AI")}}
+        <p>{{lookup this "Alcolicità AI"}}</p>
+      {{/if}}
+    {{/if}}
+{{!-- 
+    {{#if (lookup this "Luogo di Produzione")}}
+      <p>{{lookup this "Luogo di Produzione"}}</p>
+    {{/if}} --}}
+  </div>
+
+<div class="line-item-middle">
+
+  <span class="line-item-producer">
+    {{lookup this "ProduttoreNome"}}
+  </span>
+
+  {{#if (lookup this "Luogo di Produzione")}}
+      <p>{{lookup this "Luogo di Produzione"}}</p>
+    {{/if}}
+</div>
+  <span class="line-item-price">
+    {{lookup this "Prezzo In Carta Testo"}}
+  </span>
+</div>

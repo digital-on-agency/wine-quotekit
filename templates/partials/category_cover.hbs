@@ -1,0 +1,39 @@
+<section class="category-cover">
+  <style>
+    .category-cover h1 {
+      font-size: 22pt;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .category-cover h4 {
+      font-size: 14pt;
+    }
+
+    .category-cover p {
+      font-size: 9pt;
+      opacity: 0.7;
+    }
+
+    .category-cover-icon {
+      display: block;
+
+      max-width: 20mm;
+      height: auto;
+    }
+  </style>
+
+  <h1>{{this.name}}</h1>
+
+  <img
+    src="{{this.icon_url}}"
+    alt="{{this.name}} icon"
+    class="category-cover-icon"
+  />
+
+  <div style="text-align: center;">
+    <h4>{{this.subtitle}}</h4>
+
+    <p>{{this.paragraph}}</p>
+  </div>
+</section>

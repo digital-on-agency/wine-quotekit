@@ -1,0 +1,109 @@
+<section class="main-cover">
+  <style>
+    .main-cover-logo {
+      display: block;
+      width: 240px;
+      height: auto;
+    }
+
+    .main-cover-venue-name {
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .main-cover-title-venue-desc {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .main-cover-title-venue-desc h1 {
+      font-size: 30px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
+
+    .main-cover-title-venue-desc h2 {
+      font-size: 16px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .main-cover-title-venue-desc p {
+      /* margin: 24px auto 40px; */
+      max-width: 420px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #555;
+    }
+
+    .main-cover-qr {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .main-cover-qr img {
+      width: 180px;
+      height: 180px;
+      object-fit: contain;
+    }
+
+    .main-cover-qr p {
+      font-size: 11px;
+      color: #555;
+    }
+  </style>
+  {{! LOGO IMAGE }}
+  {{#if logo_image}}
+    <img src="{{logo_image}}" alt="{{logo_alt}}" class="main-cover-logo" />
+  {{else}}
+    {{! TODO: add default logo }}
+  {{/if}}
+
+  {{! TITLE, VENUE NAME, DESCRIPTION }}
+  <div class="main-cover-title-venue-desc">
+    {{! TITLE }}
+    <h1 class="main-cover-title">CARTA DEI VINI</h1>
+
+    {{! VENUE NAME }}
+    {{#if venue_name}}
+      <h2 class="main-cover-venue-name">{{venue_name}}</h2>
+    {{else}}
+      {{! TODO: add default venue name }}
+    {{/if}}
+
+    {{! SPACER }}
+    {{! TODO: fix spacing between title and description }}
+    <div style="height: 16px;"></div>
+
+    {{! DESCRIPTION }}
+    <p class="main-cover-description">{{description}}</p>
+
+  </div>
+
+  {{! SPACER }}
+  <div style="height: 24px;"></div>
+
+  <div class="main-cover-qr">
+
+    {{! QR CODE }}
+    {{#if qr_image}}
+      <img src="{{qr_image}}" alt="{{qr_alt}}" class="main-cover-qr" />
+
+      {{! QR CAPTION }}
+      <p class="main-cover-qr">{{qr_caption}}</p>
+    {{else}}
+      {{! TODO: add default qr code }}
+    {{/if}}
+  </div>
+</section>

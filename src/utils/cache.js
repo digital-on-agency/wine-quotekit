@@ -1,0 +1,1 @@
+// Cache in-memory semplice per performance: template compilati, partials, e opzionalmente risultati Airtable (con TTL). API tipo get/set/clear o memo(fn, key) per evitare lavoro ripetuto in build successive.
