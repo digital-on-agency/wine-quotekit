@@ -7,7 +7,7 @@ import { fileURLToPath } from "url"; // url module: provides a way to work with 
 import puppeteer from "puppeteer"; // puppeteer module: provides a way to control a headless browser
 import Handlebars from "handlebars"; // handlebars module: provides a way to handlebars templates
 // --- Project domain/schema utilities ---
-import { 
+import {
     DetailedError, // DetailedError class (custom): provides a way to create detailed errors
     validateMainParams // validateMainParams function (custom): validates the main parameters
 } from "./domain/schema.js";
@@ -316,6 +316,20 @@ async function buildDoc(enotecaData, wineListData) {
         const file_name = `${safeCode}.pdf`;
         const pdfPath = path.join(projectRoot, "out", file_name);
 
+        const outDir = path.dirname(pdfPath);
+
+        if (!fs.existsSync(outDir)) {
+            throw new DetailedError("Output directory does not exist", {
+                cause: "ENOENT",
+                source: "src/index.js:buildDoc",
+                details: {
+                    pdfPath,
+                    outDir,
+                    outDirExists: false,
+                },
+            });
+        }
+
         // 6. Generate PDF
         await page.pdf({
             path: pdfPath,
@@ -495,12 +509,12 @@ export default async function main(
         step_time.push({
             step: "step 4: Create new list record and upload PDF to Airtable",
             time: ((performance.now() - last) / 1000).toFixed(2),
-        }, 
-        {
-            step: "Total time",
-            time: ((performance.now() - start) / 1000).toFixed(2),
-        }
-    );
+        },
+            {
+                step: "Total time",
+                time: ((performance.now() - start) / 1000).toFixed(2),
+            }
+        );
 
 
 
