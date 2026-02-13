@@ -483,20 +483,20 @@ export default async function main(
                 }
             })
         }
-    } catch (error) {
-        throw new DetailedError("Error building document", {
-            cause: error,
-            source: "src/index.js:buildDoc",
-            details: error.details,
-        })
-    }
+        // } catch (error) {
+        //     throw new DetailedError("Error building document", {
+        //         cause: error,
+        //         source: "src/index.js:buildDoc",
+        //         details: error.details,
+        //     })
+        // }
 
-    step_time.push({
-        step: "step 3: Build document",
-        time: ((performance.now() - last) / 1000).toFixed(2),
-    });
+        step_time.push({
+            step: "step 3: Build document",
+            time: ((performance.now() - last) / 1000).toFixed(2),
+        });
 
-    try {
+        // try {
         // 5. Create new list record
         const newRecord = await createNewListRecord(client, getDatasResult.enotecaData.name, enotecaId)
 
