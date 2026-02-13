@@ -520,7 +520,7 @@ export default async function main(
             }
         );
 
-
+        await fs.unlinkSync(buildDocResult.pdfPath);
 
         return {
             ok: true,
@@ -535,7 +535,5 @@ export default async function main(
                 enotecaId: enotecaId,
             }
         })
-    } finally {
-        await fs.unlinkSync(buildDocResult.pdfPath);
     }
 }
