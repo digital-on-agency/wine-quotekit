@@ -467,15 +467,23 @@ export default async function main(
     last = performance.now();
 
     // 4. Build document
-    const buildDocResult = await buildDoc(getDatasResult.enotecaData, getDatasResult.wineListData)
+    try {
+        const buildDocResult = await buildDoc(getDatasResult.enotecaData, getDatasResult.wineListData)
 
-    if (!buildDocResult.ok) {
+        if (!buildDocResult.ok) {
+            throw new DetailedError("Error building document", {
+                cause: buildDocResult.error,
+                source: "src/index.js:buildDoc",
+                details: {
+                    enotecaId: enotecaId,
+                }
+            })
+        }
+    } catch (error) {
         throw new DetailedError("Error building document", {
-            cause: buildDocResult.error,
+            cause: error,
             source: "src/index.js:buildDoc",
-            details: {
-                enotecaId: enotecaId,
-            }
+            details: error.details,
         })
     }
 
