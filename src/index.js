@@ -273,6 +273,10 @@ async function buildDoc(enotecaData, wineListData) {
     // 1. Get partials templates
     const projectRoot = path.join(__dirname, "..");
     const partialsDir = path.join(projectRoot, "templates", "partials");
+    const tempDir = path.join(projectRoot, "temp");
+    if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir);
+    }
     for (const file of fs.readdirSync(partialsDir)) { // read all the files in the partials directory
         if (!file.endsWith(".hbs")) continue;
         const name = file.replace(".hbs", "");
@@ -314,21 +318,21 @@ async function buildDoc(enotecaData, wineListData) {
         await page.setContent(html, { waitUntil: "load" });
         const safeCode = enotecaData.name.replace(/\//g, "-");
         const file_name = `${safeCode}.pdf`;
-        const pdfPath = path.join(projectRoot, "out", file_name);
+        const pdfPath = path.join(tempDir, file_name);
 
-        const outDir = path.dirname(pdfPath);
+        // const outDir = path.dirname(pdfPath);
 
-        if (!fs.existsSync(outDir)) {
-            throw new DetailedError("Output directory does not exist", {
-                cause: "ENOENT",
-                source: "src/index.js:buildDoc",
-                details: {
-                    pdfPath,
-                    outDir,
-                    outDirExists: false,
-                },
-            });
-        }
+        // if (!fs.existsSync(outDir)) {
+        //     throw new DetailedError("Output directory does not exist", {
+        //         cause: "ENOENT",
+        //         source: "src/index.js:buildDoc",
+        //         details: {
+        //             pdfPath,
+        //             outDir,
+        //             outDirExists: false,
+        //         },
+        //     });
+        // }
 
         // 6. Generate PDF
         await page.pdf({
