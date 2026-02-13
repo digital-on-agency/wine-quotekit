@@ -1,1 +1,0 @@
-// Applica regole di business indipendenti da Airtable: sorting, grouping per categoria, calcolo di campi derivati (prezzi display, annata), fallback e pulizia testo. Output: “render model” stabile per i template.

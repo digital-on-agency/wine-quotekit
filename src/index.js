@@ -1,18 +1,32 @@
-// # API: buildWineList({inputPath, outDir, format})
-// Entry point “library”: orchestra il flusso end-to-end (fetch Airtable → map → normalize → render HTML/PDF → write su out/). Espone una funzione tipo buildWineList(options) usabile da CLI e da altri script.
+// ######## DEPENDENCIES ########
+// --- Node.js built-ins ---
+import fs from "fs"; // file system module: provides a way to read and write files
+import path from "path"; // path module: provides a way to work with file and directory paths
+import { fileURLToPath } from "url"; // url module: provides a way to work with URLs
+// --- Third-party libraries ---
+import puppeteer from "puppeteer"; // puppeteer module: provides a way to control a headless browser
+import Handlebars from "handlebars"; // handlebars module: provides a way to handlebars templates
+// --- Project domain/schema utilities ---
+import { 
+    DetailedError, // DetailedError class (custom): provides a way to create detailed errors
+    validateMainParams // validateMainParams function (custom): validates the main parameters
+} from "./domain/schema.js";
+// --- Airtable client and queries ---
+import { newATClient } from "./airtable/client.js"; // newATClient function (custom): creates a new Airtable client
+import {
+    getEnotecaById, // getEnotecaById function (custom): gets the enoteca by id
+    getWineList, // getWineList function (custom): gets the wine list
+    uploadRecordWithAttachment, // uploadRecordWithAttachment function (custom): uploads the record with attachment
+    createNewListRecord // createNewListRecord function (custom): creates a new list record
+} from "./airtable/queries.js";
+// --- Environment variables ---
+import dotenv from "dotenv"; // dotenv module: loads environment variables from a .env file
 
-import { fileURLToPath } from "url";
-import puppeteer from "puppeteer";
-import Handlebars from "handlebars";
-import fs from "fs";
-import path from "path";
-import { DetailedError, validateMainParams } from "./domain/schema.js";
-import os from "os";
-import { newATClient } from "./airtable/client.js";
-
+// ######## CONFIGURATION ########
+// loads environment variables from a .env file
+dotenv.config();
+// gets the directory name of the current module
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-import { getEnotecaById, getWineList, uploadRecordWithAttachment } from "./airtable/queries.js";
-
 
 // ########### HELPER FUNCTIONS ###########
 
@@ -70,7 +84,7 @@ Handlebars.registerHelper("formatDate", (value) => {
     return new Date(value).toLocaleDateString("it-IT");
 });
 
-/**
+/** 
  * @name imageBase64
  * @kind Utility
  * @summary Handlebars helper: reads an image from disk and returns a data URI (base64).
@@ -148,31 +162,76 @@ Handlebars.registerHelper("objectKeys", (obj) => {
 
 // ########### FUNCTIONS ###########
 
+/**
+ * Loads a template file from disk as a UTF-8 string (synchronous).
+ * Used for Handlebars layout and partials under `templates/`.
+ *
+ * @param {string} filePath - Absolute or relative path to the template file.
+ * @returns {string} File contents as a string.
+ * @throws {Error} When the file is missing or not readable (e.g. ENOENT).
+ */
 function loadTemplate(filePath) {
     return fs.readFileSync(filePath, "utf-8");
 }
 
+/**
+ * Loads enoteca and wine list data required to build the wine list document.
+ *
+ * Executes two steps in order: 
+ * 1) fetch enoteca by record ID and require a successful
+ * response; 
+ * 2) fetch wine list by enoteca name and require a successful, non-empty result.
+ * 
+ * All failures are surfaced as {@link DetailedError} with appropriate message, cause,
+ * source, and details. If the caught error already has `source` or `details`, they are
+ * preserved when rethrowing.
+ *
+ * @param {object} client - Airtable client instance (base-scoped), e.g. from {@link newATClient}.
+ * @param {string} enotecaId - Airtable record ID of the enoteca (format `rec` + 14 alphanumeric chars).
+ * @returns {Promise<{ ok: true, enotecaData: object, wineListData: object }>} Combined payload with
+ *   normalized enoteca data and wine list data. Never resolves with `ok: false`; validation or
+ *   API failures throw instead.
+ * @throws {DetailedError} When enoteca fetch returns `ok: false` (details: `enotecaId`).
+ * @throws {DetailedError} When wine list fetch returns `ok: false` (details: `enotecaName`, `enotecaId`).
+ * @throws {DetailedError} When wine list is empty (`length === 0`) (details: `enotecaName`, `enotecaId`).
+ * @throws {DetailedError} On any other failure (e.g. network, upstream API), preserving cause and
+ *   existing `error.source` / `error.details` when present.
+ */
 async function getDatas(client, enotecaId) {
-    try {// 1. Get enoteca datas
+    try {
+        // 1. Get enoteca datas
         const enotecaData = await getEnotecaById(client, enotecaId)
 
         if (!enotecaData.ok) {
-            throw new Error(enotecaData.error)
+            throw new DetailedError("Error getting enoteca by id", {
+                cause: enotecaData.error,
+                source: "src/index.js:getDatas",
+                details: {
+                    enotecaId: enotecaId,
+                }
+            })
         }
 
         // 2. Get wine list datas
         const wineListData = await getWineList(client, enotecaData.name)
 
         if (!wineListData.ok) {
-            throw new Error(wineListData.error)
-        } else if (wineListData.length === 0) {
-            throw new Error({
-                code: 404,
-                message: "No wine list found for the given enoteca",
-                data: {
+            throw new DetailedError("Error getting wine list", {
+                cause: wineListData.error,
+                source: "src/index.js:getDatas",
+                details: {
                     enotecaName: enotecaData.name,
-                },
-                source: "src/index.js:main"
+                    enotecaId: enotecaId,
+                }
+            })
+        } else if (wineListData.length === 0) {
+            throw new DetailedError("No wine list found for the given enoteca", {
+                cause: new Error("No wine list found for the given enoteca"),
+                source: "src/index.js:getDatas",
+                details: {
+                    enotecaName: enotecaData.name,
+                    enotecaId: enotecaId,
+                }
             })
         }
 
@@ -182,14 +241,36 @@ async function getDatas(client, enotecaId) {
             wineListData: wineListData,
         }
     } catch (error) {
-        // TODO: handle error
-        console.error(`Error getting datas: ${error}`)
-        throw error
+        throw new DetailedError("Error getting datas", {
+            cause: error,
+            source: error.source,
+            details: error.details ? error.details : {
+                enotecaId: enotecaId,
+            },
+        })
     }
 }
 
+/**
+ * Builds the wine list PDF document from normalized enoteca and wine list data.
+ *
+ * Registers Handlebars partials from `templates/partials`, compiles `templates/layout.hbs`
+ * with cover and listing payloads, launches a Puppeteer browser (headless in production,
+ * local Chrome in development), renders the HTML and prints to PDF. The file is written
+ * to `out/{enotecaName}.pdf` (slashes in name replaced with hyphens). The browser is
+ * always closed in a `finally` block. Any failure during template compilation, browser
+ * launch, or PDF generation is wrapped in a {@link DetailedError} with full payload in details.
+ *
+ * @param {object} enotecaData - Normalized enoteca payload (e.g. from {@link getEnotecaById}):
+ *   must include `name`, `logo`, `introduction`, `qrCode`; optional `qr_caption`.
+ * @param {object} wineListData - Normalized wine list payload (e.g. from {@link getWineList}):
+ *   must include `wines_listing` for the layout template.
+ * @returns {Promise<{ ok: true, pdfPath: string }>} Success result with absolute path to the generated PDF.
+ * @throws {DetailedError} On template read/compile, Puppeteer launch, page render, or PDF write failure;
+ *   details include `enotecaData` and `wineListData` for debugging.
+ */
 async function buildDoc(enotecaData, wineListData) {
-    // 4. Get partials templates
+    // 1. Get partials templates
     const projectRoot = path.join(__dirname, "..");
     const partialsDir = path.join(projectRoot, "templates", "partials");
     for (const file of fs.readdirSync(partialsDir)) { // read all the files in the partials directory
@@ -198,7 +279,7 @@ async function buildDoc(enotecaData, wineListData) {
         Handlebars.registerPartial(name, loadTemplate(path.join(partialsDir, file)));
     }
 
-    // 5. Compile template
+    // 2. Compile template
     const mainTpl = loadTemplate(path.join(projectRoot, "templates", "layout.hbs"));
     const compile = Handlebars.compile(mainTpl);
     const html = compile({
@@ -211,15 +292,12 @@ async function buildDoc(enotecaData, wineListData) {
             qr_caption: enotecaData.qr_caption || "Scansiona il QR per visualizzare il menù completo e gli abbinamenti consigliati.", // TODO: add default qr caption
         },
         param_listing: wineListData.wines_listing,
-        // param_categories: wineListData.list,
-        // param_category_cover: wineListData.list[1],
-        // param_listing: wineListData.list[2],
     });
 
-    // 6. Generate PDF
+    // 3. Generate PDF
     const isProd = process.env.NODE_ENV === "production";
 
-    // launch the browser (headless or not)
+    // 4. Launch the browser (headless or not)
     const browser = await puppeteer.launch({
         headless: "new",
         ...(isProd
@@ -231,15 +309,14 @@ async function buildDoc(enotecaData, wineListData) {
     });
 
     try {
-        // create a new page
+        // 5. Create a new page
         const page = await browser.newPage();
-        // set the content of the page
         await page.setContent(html, { waitUntil: "load" });
-
-        // No slashes in filename (e.g. "006/2025" → "006-2025") so path stays a single file
         const safeCode = enotecaData.name.replace(/\//g, "-");
         const file_name = `${safeCode}.pdf`;
         const pdfPath = path.join(projectRoot, "out", file_name);
+
+        // 6. Generate PDF
         await page.pdf({
             path: pdfPath,
             format: "A4",
@@ -252,20 +329,68 @@ async function buildDoc(enotecaData, wineListData) {
             pdfPath: pdfPath,
         }
     } catch (error) {
-        // TODO: handle error
-        console.error(`Error building document: ${error}`)
-        throw error
+        throw new DetailedError("Error building document", {
+            cause: error,
+            source: "src/index.js:buildDoc",
+            details: {
+                enotecaData: enotecaData,
+                wineListData: wineListData,
+            }
+        })
     } finally {
         await browser.close();
     }
 }
 
-
+/**
+ * Main entry point: runs the full wine list pipeline from credentials to PDF uploaded on Airtable.
+ *
+ * Executes six steps in order. Each step validates or uses the previous result; any failure
+ * is wrapped in a {@link DetailedError} with appropriate message, cause, source, and details.
+ *
+ * 1. **Validate parameters** — Calls {@link validateMainParams}(enotecaId, baseId, authToken).
+ *    If `!validationResult.ok`, throws with cause `validationResult.errors` and details containing
+ *    the three inputs.
+ *
+ * 2. **Create Airtable client** — Calls {@link newATClient}(baseId, authToken). On failure,
+ *    rethrows as DetailedError, preserving `error.source` and `error.details` when present.
+ *
+ * 3. **Load data** — Calls {@link getDatas}(client, enotecaId). Expects `getDatasResult.ok === true`
+ *    and enoteca + wine list payloads; otherwise throws with enotecaId in details.
+ *
+ * 4. **Build document** — Calls {@link buildDoc}(enotecaData, wineListData). Writes the PDF to
+ *    `out/{enotecaName}.pdf`. If `!buildDocResult.ok`, throws with enotecaId in details.
+ *
+ * 5. **Create list record** — Calls {@link createNewListRecord}(client, enotecaName, enotecaId)
+ *    to create a new record in the wine list history table.
+ *
+ * 6. **Upload PDF** — Calls {@link uploadRecordWithAttachment} to attach the generated PDF to
+ *    that record (table "Storico Carte dei Vini", field from `AIRTABLE_WINE_LIST_PDF_FIELD_ID`).
+ *    On failure, throws with enotecaId in details.
+ *
+ * A `finally` block removes the local PDF file at `buildDocResult.pdfPath` after the try/catch
+ * (whether or not upload succeeded), so the process does not leave temporary PDFs on disk.
+ *
+ * @param {string} enotecaId - Airtable record ID of the enoteca (format `rec` + 14 alphanumeric).
+ * @param {string} baseId - Airtable base ID (format `app` + alphanumeric).
+ * @param {string} authToken - Airtable personal access token for API and attachment upload.
+ * @returns {Promise<{ ok: true, updatedRecord: object }>} Success result with the updated Airtable
+ *   record info returned by the upload. Does not resolve with `ok: false`; failures throw.
+ * @throws {DetailedError} When validation fails (step 1); details include enotecaId, baseId, authToken.
+ * @throws {DetailedError} When client creation fails (step 2); details include baseId, authToken or from cause.
+ * @throws {DetailedError} When getDatas fails or returns not ok (step 3); details include enotecaId.
+ * @throws {DetailedError} When buildDoc fails or returns not ok (step 4); details include enotecaId.
+ * @throws {DetailedError} When createNewListRecord or upload fails (steps 5–6); details include enotecaId.
+ */
 export default async function main(
     enotecaId,
     baseId,
     authToken,
 ) {
+    let step_time = [];
+    const start = performance.now();
+    let last = start;
+
     // 1. Validate main parameters
     const validationResult = validateMainParams(
         enotecaId,
@@ -285,10 +410,17 @@ export default async function main(
         })
     }
 
+    step_time.push({
+        step: "step 1: Parameters validation",
+        time: ((performance.now() - last) / 1000).toFixed(2),
+    });
+
+    last = performance.now();
+
     // 2. Create Airtable client
     let client = null;
     try {
-        client = newATClient(baseId, authToken)
+        client = newATClient(baseId, authToken);
     } catch (error) {
         throw new DetailedError("Error creating Airtable client", {
             cause: error,
@@ -300,10 +432,7 @@ export default async function main(
         })
     }
 
-    const tempFilePath = os.homedir() + '/Desktop/temp.json';
-
-    // # START ########## GET DATAS ###########
-
+    // 3. Get datas
     const getDatasResult = await getDatas(client, enotecaId)
 
     if (!getDatasResult.ok) {
@@ -316,43 +445,14 @@ export default async function main(
         })
     }
 
-    // # END ########## GET DATAS ##########
+    step_time.push({
+        step: "step 2: Airtable client creation and get datas",
+        time: ((performance.now() - last) / 1000).toFixed(2),
+    });
 
-    // # START ########## COPY PDF TO DESKTOP ###########
+    last = performance.now();
 
-    // // Salva il risultato PDF sulla scrivania dell'utente, come copia (best effort)
-    // try {
-    //     try {
-    //         const jsonPath = tempFilePath.replace(/\.pdf$/, ".json");
-    //         fs.writeFileSync(jsonPath, JSON.stringify(getDatasResult, null, 2), "utf-8");
-    //         console.log(`Dati salvati su: ${jsonPath}`);
-    //     } catch (err) {
-    //         console.warn("Errore nel salvataggio del file JSON sulla Scrivania:", err);
-    //     }
-
-    //     console.log(`PDF copiato sulla Scrivania: ${tempFilePath}`)
-    // } catch (err) {
-    //     console.warn("Errore nella copia del PDF sulla Scrivania:", err)
-    // }
-
-
-    // # END ########## COPY PDF TO DESKTOP ###########
-
-    // # START ########## GET DATAS FROM FILE ###########
-
-    // // Carica dati da file JSON specificato invece che da getDatas()
-    // const dataPath = "/Users/niccolofulgaro/Desktop/temp.json";
-    // const fileContent = fs.readFileSync(tempFilePath, "utf-8");
-    // const parsed = JSON.parse(fileContent);
-
-    // // Sostituisci getDatasResult con dati dal file
-    // const getDatasResult = {
-    //     enotecaData: parsed.enotecaData,
-    //     wineListData: parsed.wineListData,
-    //     ok: true,
-    // };
-    // # END ########## GET DATAS FROM FILE ###########
-
+    // 4. Build document
     const buildDocResult = await buildDoc(getDatasResult.enotecaData, getDatasResult.wineListData)
 
     if (!buildDocResult.ok) {
@@ -365,27 +465,59 @@ export default async function main(
         })
     }
 
-    // # START ########## UPLOAD PDF TO AIRTABLE ###########
-    const uploadPDFResult = await uploadRecordWithAttachment({
-        client: client,
-        token: authToken,
-        baseId: baseId,
-        tableIdOrName: "Storico Carte dei Vini",
-        recordId: getDatasResult.wineListData.id,
-        fieldId: process.env.AIRTABLE_WINE_LIST_PDF_FIELD_ID,
-        filePath: buildDocResult.pdfPath,
-        filename: `Carta dei Vini.pdf`,
-    })
+    step_time.push({
+        step: "step 3: Build document",
+        time: ((performance.now() - last) / 1000).toFixed(2),
+    });
 
-    if (!uploadPDFResult.ok) {
-        throw new DetailedError("Error uploading PDF to Airtable", {
-            cause: uploadPDFResult.error,
-            source: "src/index.js:uploadPDF",
+    try {
+        // 5. Create new list record
+        const newRecord = await createNewListRecord(client, getDatasResult.enotecaData.name, enotecaId)
+
+        // 6. Upload PDF to Airtable
+        const uploadPDFResult = await uploadRecordWithAttachment({
+            client: client,
+            tableIdOrName: "Storico Carte dei Vini",
+            recordId: newRecord.id,
+            filePath: buildDocResult.pdfPath,
         })
+
+        if (!uploadPDFResult.ok) {
+            throw new DetailedError("Error uploading PDF to Airtable", {
+                cause: uploadPDFResult.error,
+                source: "src/index.js:uploadPDF",
+                details: {
+                    enotecaId: enotecaId,
+                }
+            })
+        }
+
+        step_time.push({
+            step: "step 4: Create new list record and upload PDF to Airtable",
+            time: ((performance.now() - last) / 1000).toFixed(2),
+        }, 
+        {
+            step: "Total time",
+            time: ((performance.now() - start) / 1000).toFixed(2),
+        }
+    );
+
+
+
+        return {
+            ok: true,
+            updatedRecord: uploadPDFResult.updated,
+            step_time: step_time,
+        }
+    } catch (error) {
+        throw new DetailedError("Error uploading PDF to Airtable", {
+            cause: error,
+            source: "src/index.js:uploadPDF",
+            details: {
+                enotecaId: enotecaId,
+            }
+        })
+    } finally {
+        await fs.unlinkSync(buildDocResult.pdfPath);
     }
-
-    return buildDocResult.pdfPath
 }
-
-
-// main("recoBeLAxlhrj7jvw")

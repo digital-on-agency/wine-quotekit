@@ -1,5 +1,11 @@
-import { listAllRecords, addAttachmentToRecord } from "./client.js"
-import { DetailedError } from "../domain/schema.js"
+// ######## DEPENDENCIES ########
+import {
+    listAllRecords,
+    addAttachmentToRecord
+} from "./client.js" // imports the client from the client.js file
+import { DetailedError } from "../domain/schema.js" // imports the DetailedError from the schema.js file
+
+// ######## FUNCTIONS ########
 
 /**
  * Fetches a single enoteca (wine shop) record from Airtable by record ID and returns a normalized shape.
@@ -155,12 +161,12 @@ export async function getWineList(client, enoName) {
 
             // if the record does not have the required fields, HANDLE ERROR HERE
             if (!hasTipologia || !hasRegione || !hasZona) {
-                // TODO: handle error here
-                console.log("[DEBUG getWineList] Record in N/A bucket:", {
-                    id: record.id,
-                    Tipologia: fields.Tipologia,
-                    Regione: fields.Regione,
-                    Zona: fields.Zona,
+                throw new DetailedError("Error getting wine list", {
+                    cause: error,
+                    source: "src/airtable/queries.js:getWineList",
+                    details: {
+                        enoName: enoName,
+                    }
                 })
             }
 
@@ -300,7 +306,39 @@ export async function getWineList(client, enoName) {
     }
 }
 
-// TODO : questa funzione è temporanea, andrà fatta meglio e ad oc
+/**
+ * Creates a new record in the "Storico Carte dei Vini" table for the given enoteca and today's date.
+ * Sets field "Enoteca" to the enoteca record ID and "Data" to the current date in `YYYY-MM-DD` format
+ * (derived from Italian locale). Used to register a new wine list history entry before attaching the PDF.
+ *
+ * @param {object} client - Airtable client instance (base-scoped).
+ * @param {string} enoName - Enoteca name (used only in error details for debugging).
+ * @param {string} enoId - Airtable record ID of the enoteca, written into the "Enoteca" link field.
+ * @returns {Promise<object>} The newly created Airtable record (including `id` and `fields`).
+ * @throws {DetailedError} When createRecord fails; details include enoName and enoId.
+ */
+export async function createNewListRecord(client, enoName, enoId) {
+    const now = new Date();
+    const date = now.toLocaleDateString('it-IT', { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('-');
+
+    try {
+        const newRecord = await client.createRecord("Storico Carte dei Vini", {
+            "Enoteca": [enoId],
+            "Data": date,
+        });
+
+        return newRecord;
+    } catch (error) {
+        throw new DetailedError("Error creating new list record", {
+            cause: error,
+            source: "src/airtable/queries.js:createNewListRecord",
+            details: {
+                enoName: enoName,
+                enoId: enoId,
+            }
+        })
+    }
+}
 
 /**
  * @name uploadRecordWithAttachment
@@ -368,42 +406,45 @@ export async function getWineList(client, enoName) {
  */
 export async function uploadRecordWithAttachment({
     client,
-    token,
-    baseId,
     tableIdOrName,
     recordId,
-    fieldId,
     filePath,
-    filename = undefined,
     contentType = undefined,
-    returnFieldsByFieldId = false,
 }) {
-    // Diagnostic: Verify the record exists and check if the field is accessible
+    // 1. Verify the record exists and check if the field is accessible
     try {
-        const verifyRecord = await client.getRecord({
-            token,
-            baseId,
-            tableIdOrName,
-            recordId,
-            returnFieldsByFieldId: true, // Get fields by ID to check if fieldId exists
-        });
-
+        const verifyRecord = await client.getRecord(tableIdOrName, recordId);
     } catch (verifyError) {
-        console.error("Failed to verify record before upload:", verifyError.message);
-        throw verifyError;
+        throw new DetailedError("Error verifying record before upload", {
+            cause: verifyError,
+            source: "src/airtable/queries.js:uploadRecordWithAttachment",
+            details: {
+                recordId: recordId,
+                tableIdOrName: tableIdOrName,
+            }
+        });
     }
 
+    // 2. Build the filename
+    const now = new Date();
+
+    const date = now.toLocaleDateString('it-IT', { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('-');
+    const hour = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const filename = `${date} - ${hour} - Carta dei Vini.pdf`;
+
+    // 3. Upload the PDF to the Airtable record
     const updated = await addAttachmentToRecord({
         client,
         tableName: tableIdOrName,
         recordId,
-        fieldName: fieldId,
+        fieldName: "pdf",
         filePath,
         filename,
-        contentType  // o 'type'
+        contentType
     })
 
-    console.log("updated:", updated);
-
-    return updated;
+    return {
+        ok: true,
+        updated: updated
+    };
 }

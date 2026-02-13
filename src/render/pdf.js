@@ -1,1 +1,0 @@
-// Render PDF da HTML via Puppeteer: gestisce browser riusabile (singleton), crea page, imposta opzioni (format, margin, printBackground), attende risorse, genera buffer PDF. Include gestione pulita di errori e teardown.

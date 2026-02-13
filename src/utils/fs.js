@@ -1,1 +1,0 @@
-// Utility filesystem: ensureDir, readFile, writeFileAtomic, gestione path e naming output. Evita output corrotti (scrittura su tmp + rename) e centralizza ogni accesso a disco.

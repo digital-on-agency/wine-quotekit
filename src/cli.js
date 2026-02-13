@@ -1,20 +1,28 @@
-// # entrypoint CLI (node src/cli.js ...)
-// CLI thin: parse argomenti (es. restaurant slug, output format, date, paths), valida input base e chiama buildWineList da src/index.js. Gestisce exit code e stampa errori user-friendly.
+// ######## DEPENDENCIES ########
+import main from "./index.js"; // main function (custom): runs the full wine list pipeline from credentials to PDF uploaded on Airtable
 
-import main from "./index.js";
+// ######## FUNCTIONS ########
 
 export default async function cli() {
-    const start = performance.now();
-
     try {
+        // runs the full wine list pipeline from credentials to PDF uploaded on Airtable
+        const result = await main("recoBeLAxlhrj7jvw", "appFXNhUnafY4yRM5", "patm1It1CgNgk7QGY.a5f27767877a843a0b9e04b4f9964571f6cab00bc0be51552bcfebf967f120c9");
 
-        const pdfPath = await main("recoBeLAxlhrj7jvw", "appFXNhUnafY4yRM5", "patm1It1CgNgk7QGY.a5f27767877a843a0b9e04b4f9964571f6cab00bc0be51552bcfebf967f120c9");
+        if (!result.ok) {
+            throw new DetailedError("Error updating record", {
+                cause: result.error,
+                source: "src/cli.js:cli",
+                details: {
+                    enotecaId: "recoBeLAxlhrj7jvw",
+                }
+            })
+        }
 
-        const elapsed = ((performance.now() - start) / 1000).toFixed(2);
-        console.log(`PDF generated successfully: ${pdfPath} (${elapsed}s)`);
+        console.log(result.step_time);
+        process.exit(0);
     } catch (error) {
         if (error.status === 408) {
-        // Se status è 408, ritenta fino a 3 volte prima di fallire
+        // if status is 408, retry up to 3 times before failing
         let attempts = 1;
         let maxAttempts = 3;
         let lastError = error;

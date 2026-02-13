@@ -6,7 +6,7 @@
     "build": "node src/build.js",
     "preview": "node src/build.js --html",
     "list": "node -e \"console.log(require('fs').readdirSync('./data/proposals').join('\\n'))\"",
-    "start": "node src/lib/api/server/server.js"
+    "start": "node src/server.js"
   },
   "dependencies": {
     "@te3sk/airtable-core": "^0.1.7",

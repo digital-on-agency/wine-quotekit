@@ -1,13 +1,18 @@
+// ######## DEPENDENCIES ########
+// airtable-core: provides a client for the Airtable API
 import { 
     createAirtableClient, 
     listAllRecords, 
     addAttachmentToRecord
 } from "@te3sk/airtable-core/server";
-
-// import { getRecord } from "@te3sk/airtable-core";
+// loads environment variables from a .env file
 import dotenv from "dotenv";
 
+// ######## CONFIGURATION ########
+
 dotenv.config();
+
+// ######## FUNCTIONS ######## 
 
 /**
  * Creates a new Airtable client instance for a specific base/token pair.
@@ -24,6 +29,7 @@ function newATClient(baseId, authToken) {
         return createAirtableClient({
             token: authToken,
             baseId: baseId,
+            timeoutMs: 600000,
         });
     } catch (error) {
         throw new DetailedError("Error creating Airtable client", {
@@ -37,17 +43,4 @@ function newATClient(baseId, authToken) {
     }
 }
 
-/**
- * Singleton Airtable API client bound to the configured base.
- * Authenticates via `AIRTABLE_AUTH_TOKEN` or, if unset, `AIRTABLE_API_KEY`;
- * targets the base identified by `AIRTABLE_BASE_ID`. Use this instance for
- * all Airtable reads/writes within the application.
- * @type {import("@scope/airtable/server").AirtableClient}
- */
-const client = createAirtableClient({
-    token: process.env.AIRTABLE_AUTH_TOKEN,
-    baseId: process.env.AIRTABLE_BASE_ID,
-});
-
 export { listAllRecords, newATClient, addAttachmentToRecord };
-// export default client;

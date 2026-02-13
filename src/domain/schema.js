@@ -1,3 +1,4 @@
+// ######## FUNCTIONS ########
 /**
  * Checks if a string matches Airtable record ID format: `rec` + 14 alphanumeric characters.
  * @param {string} id - Value to test.

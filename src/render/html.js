@@ -1,1 +1,0 @@
-// Render HTML: setup Handlebars (helpers/partials), compilazione template + caching, iniezione asset CSS (inline o link) e path immagini. Input: render model; output: string HTML finale (deterministica).
